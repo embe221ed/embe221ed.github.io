@@ -8,12 +8,11 @@ toc:    true
 categories: writeup pwn
 ---
 
-> files: [madcore.zip][madcore_zip]
-
 ## introduction
 
 `madcore` was a pwn task from [Google CTF 2022][googlectf]. It is a coredump helper
 that parses the input as _coredump_ file and produces some results.
+<!--more-->
 
 ### files
 
@@ -25,6 +24,8 @@ We are provided with few files:
 + `libstdc++.so.6`
 + `madcore`
 + `nsjail.cfg`
+
+> download: [madcore.zip][madcore_zip]
 
 ### interface
 
