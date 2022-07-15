@@ -134,13 +134,13 @@ And here is the result:
 
 ```bash
 ➜  writeup git:(main) ✗ ./solve.py CORE=crash/core.1001.14162.1657865437
-[*] '/home/h4ck1t/Desktop/CTFs/GoogleCTF/2022/pwn/madcore/writeup/madcore'
+[*] '/home/[REDACTED]/madcore'
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
     Stack:    No canary found
     NX:       NX enabled
     PIE:      PIE enabled
-[+] Starting local process '/home/h4ck1t/Desktop/CTFs/GoogleCTF/2022/pwn/madcore/writeup/madcore': pid 15815
+[+] Starting local process '/home/[REDACTED]/madcore': pid 15815
 [*] len: 507904
 [*] Switching to interactive mode
 {"backtrace":[[0,"<unknown>"],[2137,"??\n??:0:0\n\n"],[438894,"??\n??:0:0\n\n"],[438366,"??\n??:0:0\n\n"],[438540,"??\n??:0:0\n\n"],[438366,"??\n??:0:0\n\n"],[153840,"0x328\n"]],"modules":["/home/[REDACTED]/crash","/usr/lib/x86_64-linux-gnu/ld-2.31.so","/usr/lib/x86_64-linux-gnu/libc-2.31.so"]}[*] Got EOF while reading in interactive
