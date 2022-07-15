@@ -179,6 +179,8 @@ The `Corefile::Process()` function:
 The `Corefile::GetRegisters()` function:
 + iterates over all `process_headers` and runs `Corefile::ProcessNotes()` for specific headers
 
+### main() continued
+
 Here, the initialization is done. After that, the program gets into loop that iterates over all threads:
 
 ```cpp
@@ -205,6 +207,8 @@ while (threads = corefile.GetNumberOfThreads(), thread_num < threads) {
   thread_num = thread_num + 1;
 }
 ```
+
+#### Corefile::GetBacktrace()
 
 ## vulnerabilities
 
