@@ -3,9 +3,9 @@ author: embe221ed
 layout: post
 title:  "madcore"
 date:   2022-07-15 05:00:00 +0200
-tags:   pwn writeup
+tags:   pwn
 toc:    true
-categories: writeup pwn
+categories: writeup
 ---
 
 ## introduction
@@ -151,7 +151,9 @@ We can interact with the program, let's see what is happening inside!
 
 ## reverse engineering
 
-### main()
+### functions
+
+#### main()
 
 After the reading ends, the `Corefile::Corefile()` object is initialized with the buffer.
 
@@ -179,7 +181,7 @@ The `Corefile::Process()` function:
 The `Corefile::GetRegisters()` function:
 + iterates over all `process_headers` and runs `Corefile::ProcessNotes()` for specific headers
 
-### main() continued
+#### main() continued
 
 Here, the initialization is done. After that, the program gets into loop that iterates over all threads:
 
@@ -209,6 +211,79 @@ while (threads = corefile.GetNumberOfThreads(), thread_num < threads) {
 ```
 
 #### Corefile::GetBacktrace()
+
+The `Corefile::GetBacktrace()` function:
++ initializes `StackWalker` object
++ runs `StackWalker::GetBacktrace()` function
++ gets `Backtrace::GetFrameCount()` function
+
+
+#### StackWalker::GetBacktrace()
+
+```cpp
+Backtrace * __thiscall StackWalker::GetBacktrace(StackWalker *this, ulong address) {
+  /* variables */
+  
+  backtrace = (Backtrace *)operator.new(0xc0);
+  Backtrace::Backtrace(backtrace, address);
+  binaryWithAddr = (Binary *)this->corefile.GetBinaryContainingAddress(address);
+  tempAddr = address;
+  if (binaryWithAddr != (Binary *)0x0) {
+    while (isContain = (bool)binaryWithAddr.ContainsVirtualAddress(tempAddr), isContain == true) {
+      vAddr = Binary::GetVirtualAddress(binaryWithAddr);
+      coreAddr = binaryWithAddr.GetCore();
+      addrInCore = *(coreAddr + (tempAddr - vAddr & 0xfffffffffffffff8));
+      binaryWithNewAddr = this->corefile.GetBinaryContainingAddress(addrInCore);
+      if ((binaryWithNewAddr != (Binary *)0x0) && binaryWithNewAddr.IsExecutable() == true)) {
+        backtrace.PushModule(binaryWithNewAddr, addrInCore, tempAddr - address);
+      }
+      tempAddr = tempAddr + 8;
+    }
+  }
+  return backtrace;
+}
+```
+
+#### Backtrace::PushModule()
+
+```cpp
+void __thiscall Backtrace::PushModule(Backtrace *this, Binary *binary, ulong addrInCore, ulong offset) {
+  /* variables */
+  
+  hasValue = this->frameCount.has_value();
+  if (hasValue != true) {
+    initValue = 1;
+    this->frameCount = initValue;
+  }
+  maxValue = 6;
+  if (this->frameCount <= maxValue) {
+    frameCount = this->frameCount.value();
+    newFrameCount = frameCount + 1;
+    this->frameCount = newFrameCount;
+    vAddr = binary.GetVirtualAddress();
+    currFrame = CallFrame::CallFrame(offset, addrInCore - vAddr, binary);
+    frameCount = *this->frameCount;
+    frameIdx = frameCount - 1;
+    this->frames[frameIdx].field0_0x0 = currFrame.field0_0x0;
+    this->frames[frameIdx].field1_0x8 = currFrame.field1_0x8;
+    this->frames[frameIdx].binary = currFrame.binary;
+  }
+  return;
+}
+```
+
+#### Backtrace::GetFrameCount()
+
+```cpp
+uint __thiscall Backtrace::GetFrameCount(Backtrace *this) {
+  uint *frameCountPtr;
+  
+  frameCountPtr = *this->frameCount;
+  return *frameCountPtr;
+}
+```
+
+### structures
 
 ## vulnerabilities
 

@@ -21,7 +21,7 @@ timezone: Europe/Warsaw
 # jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
 # ↓ --------------------------
 
-title: blog                          # the main title
+title: embe221ed blog                          # the main title
 
 tagline: writeups, articles etc.   # it will display as the sub-title
 
@@ -44,8 +44,8 @@ social:
   email: void             # change to your email address
   links:
     # The first element serves as the copyright owner's link
-    - https://twitter.com/username      # change to your twitter homepage
-    - https://github.com/username       # change to your github homepage
+    - https://twitter.com/embe221ed      # change to your twitter homepage
+    - https://github.com/embe221ed       # change to your github homepage
     # Uncomment below to add more social links
     # - https://www.facebook.com/username
     # - https://www.linkedin.com/in/username
