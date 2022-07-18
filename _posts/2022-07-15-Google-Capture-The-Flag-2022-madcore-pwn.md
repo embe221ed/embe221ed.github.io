@@ -418,7 +418,7 @@ how much data to copy - we have `Heap Overflow` here with ability to overwrite m
 The function is not vulnerable by it's own. It is the design which can cause vulnerabilities wherever this function is used.
 `Backtrace::frameCount` is of type `std::optional<unsigned int>` which means that the value can be uninitialized in some cases.
 However, the function `Backtrace::GetFrameCount()` doesn't check whether `std::optional::has_value()`.
-In that case, the caller would be responsible for checkig if the value is initialized.
+In that case, the caller would be responsible for checking if the value is initialized.
 
 The `frameCount` is fetched in three places:
 1. `Backtrace::PushModule()`
@@ -823,7 +823,7 @@ memoryPtr = memoryPtr + 3; // here it's memoryPtr + 0x18 but memoryPtr is of typ
 index = index + 1;
 ```
 because the offset between next values to zero-out is `0x18 * 0x3 = 0x48`
-2. Find register which is places at the correct offset and set it's value to valid address from _coredump_ perspective that will be then translated to valid address
+2. Find register which is placed at the correct offset and set it's value to valid address from _coredump_ perspective that will be then translated to valid address.
 In my case it was `R14` which was at offset `0x8` (so `registers[1]`). It was pointing at offset `0x40000`:
 
 ```python
@@ -876,7 +876,7 @@ As the `frameCount` is huge, the loop executing `Symbolizer::Symbolicate()` won'
 or other errors and as a result the JSON with outputs won't be printed and we won't see the output of command. In order to fix that I specified the `frameCount` value
 that will cause the loop to finish just after fake `CallFrame`. This is fairly easy, as we know the current value (`0x742f6572`) and we know it is `0x18 * 0x3 = 0x48`
 after the top chunk size we already written into our _coredump_ file.
-After few trials, the value `frameCount == 0xd` returned following result:
+The value `frameCount == 0xd` returned following result:
 
 ```bash
 ➜  writeup git:(main) ✗ ./solve.py CORE=crash/core.1001.14162.1657865437
