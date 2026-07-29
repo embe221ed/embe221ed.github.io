@@ -1,0 +1,53 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: [README.md, LICENSE, .gitignore]
+  workflow_dispatch:
+
+# Requires: Settings -> Pages -> Source = "GitHub Actions"
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it mid-publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # jekyll-seo-tag / lastmod want history
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          # Pinned deliberately. Never use 'latest' here: Ruby ships a major
+          # every December 25th and 4.0 broke Jekyll on release day.
+          ruby-version: "3.4"
+          bundler-cache: true
+
+      - uses: actions/configure-pages@v5
+
+      - run: bundle exec jekyll build
+        env:
+          JEKYLL_ENV: production
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

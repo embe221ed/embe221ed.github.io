@@ -1,0 +1,112 @@
+/* interdot-theme.css — GENERATED. Do not edit by hand.
+ *
+ * Source: interdotensional `templates/web/interdot-theme.css.j2`
+ *         theme gruvbox-material-light (+ its pair, gruvbox-material-dark)
+ *
+ * The variable names are interdotensional's `tools.leaf.colors` role
+ * vocabulary — the same 16 roles every theme in that repo already defines, so
+ * swapping in any other theme is a regenerate, not a rewrite.
+ *
+ * Every consumption site in main.css passes a literal fallback
+ * (`var(--id-bg, #fbf1c7)`) because CSS has no StrictUndefined: a renamed
+ * variable resolves to nothing, silently. Deleting this file must leave a
+ * readable site.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --id-author-theme: "gruvbox-material-light";
+  --id-author-font: "Maple Mono";
+
+  /* ---- gruvbox-material-light (active) ---- */
+  --id-bg: #fbf1c7;
+  --id-bg-deep: #f4e8be;
+  --id-panel: #e5d5ad;
+  --id-border: #d5c4a1;
+  --id-faint: #a9a39a;
+  --id-fg: #654735;
+  --id-fg-strong: #4f3829;
+  --id-muted: #6b665f;
+  --id-dim: #928374;
+
+  /* accents carry text_darken so they clear WCAG AA on --id-bg AND
+   * --id-bg-deep; the raw palette values fail (yellow 3.49:1, orange 3.76:1). */
+  --id-accent: #935c07;
+  --id-accent2: #a75008;
+  --id-success: #636e2a;
+  --id-info: #446e78;
+  --id-special: #8b5878;
+  --id-warning: #935c07;
+  --id-danger: #b14444;
+
+  /* text placed ON a filled accent (inverse-video chrome) */
+  --id-on-accent: #fbf1c7;
+}
+
+/* ---- gruvbox-material-dark (pair) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --id-author-theme: "gruvbox-material-dark";
+    --id-bg: #282828;
+    --id-bg-deep: #1d2021;
+    --id-panel: #3c3836;
+    --id-border: #504945;
+    --id-faint: #6b665f;
+    --id-fg: #d4be98;
+    --id-fg-strong: #ddc7a1;
+    --id-muted: #a9a39a;
+    --id-dim: #928374;
+    --id-accent: #d8a657;
+    --id-accent2: #e78a4e;
+    --id-success: #a9b665;
+    --id-info: #7daea3;
+    --id-special: #d3869b;
+    --id-warning: #d8a657;
+    --id-danger: #ea6962;
+    --id-on-accent: #282828;
+  }
+}
+
+/* Manual override wins over the media query in BOTH directions. */
+:root[data-theme="light"] {
+  --id-author-theme: "gruvbox-material-light";
+  --id-bg: #fbf1c7;
+  --id-bg-deep: #f4e8be;
+  --id-panel: #e5d5ad;
+  --id-border: #d5c4a1;
+  --id-faint: #a9a39a;
+  --id-fg: #654735;
+  --id-fg-strong: #4f3829;
+  --id-muted: #6b665f;
+  --id-dim: #928374;
+  --id-accent: #935c07;
+  --id-accent2: #a75008;
+  --id-success: #636e2a;
+  --id-info: #446e78;
+  --id-special: #8b5878;
+  --id-warning: #935c07;
+  --id-danger: #b14444;
+  --id-on-accent: #fbf1c7;
+}
+
+:root[data-theme="dark"] {
+  --id-author-theme: "gruvbox-material-dark";
+  --id-bg: #282828;
+  --id-bg-deep: #1d2021;
+  --id-panel: #3c3836;
+  --id-border: #504945;
+  --id-faint: #6b665f;
+  --id-fg: #d4be98;
+  --id-fg-strong: #ddc7a1;
+  --id-muted: #a9a39a;
+  --id-dim: #928374;
+  --id-accent: #d8a657;
+  --id-accent2: #e78a4e;
+  --id-success: #a9b665;
+  --id-info: #7daea3;
+  --id-special: #d3869b;
+  --id-warning: #d8a657;
+  --id-danger: #ea6962;
+  --id-on-accent: #282828;
+}

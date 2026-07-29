@@ -1,0 +1,27 @@
+{%- comment -%}
+  tmux status bar. The author's real config puts status on TOP, so it goes on
+  top here. Window numbering mirrors tmux's own: the active window is inverse
+  video. Decorative glyphs only; the window list is real navigation.
+{%- endcomment -%}
+<div class="tmux">
+  <span class="tmux__session">[{{ site.author.name }}]</span>
+
+  <nav class="tmux__windows" aria-label="Sections">
+    {%- assign p = page.url -%}
+    <a class="tmux__win" href="{{ '/' | relative_url }}"
+       {% if p == '/' %}aria-current="page"{% endif %}>0:home</a>
+    <a class="tmux__win" href="{{ '/categories/writeup/' | relative_url }}"
+       {% if p contains '/posts/' or p contains '/categories/' %}aria-current="page"{% endif %}>1:writeups</a>
+    <a class="tmux__win" href="{{ '/tags/' | relative_url }}"
+       {% if p contains '/tags/' %}aria-current="page"{% endif %}>2:tags</a>
+    <a class="tmux__win" href="{{ '/about/' | relative_url }}"
+       {% if p == '/about/' %}aria-current="page"{% endif %}>3:about</a>
+  </nav>
+
+  <div class="tmux__right">
+    <button type="button" class="themebtn" data-theme-toggle
+            aria-label="Toggle light and dark theme">
+      <span data-theme-label>theme</span>
+    </button>
+  </div>
+</div>

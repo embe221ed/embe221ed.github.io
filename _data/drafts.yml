@@ -1,0 +1,7 @@
+# Drafts advertised on the homepage index without being published.
+# Rendered greyed out with `-rw-------` mode bits. Delete a row when the real
+# post lands in _posts/. Purely cosmetic — nothing here affects the build.
+#
+# - date: "2026-08-14"
+#   category: writeup
+#   title: "some CTF 2026 — heap note"

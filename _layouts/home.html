@@ -1,97 +1,90 @@
 ---
-layout: page
-# The Home page layout
+layout: default
 ---
+{%- comment -%}
+  Surface 1: full terminal. There is no long-form reading to protect here, so
+  the entire terminal budget is spent on this page.
+{%- endcomment -%}
+<div class="wrap surface-term">
 
-{% include lang.html %}
+  <h1 class="ps1">
+    <span class="ps1__ctx">
+      <span class="ps1__user">{{ site.author.name }}</span><span class="ps1__at">@</span><span class="ps1__host">blog</span>
+      <span class="ps1__path">~/writeups</span>
+      <span class="ps1__branch">⎇ main</span>
+    </span>
+    <span class="ps1__line">
+      <span class="ps1__caret" aria-hidden="true">❯</span>
+      <span class="ps1__said">{{ site.tagline }}</span><span class="cursor" aria-hidden="true"></span>
+    </span>
+  </h1>
 
-{% assign pinned = site.posts | where: "pin", "true" %}
-{% assign default = site.posts | where_exp: "item", "item.pin != true and item.hidden != true" %}
+  <h2 class="term-h">ls -la ~/writeups</h2>
+  <ul class="ls">
+    {%- for post in site.posts %}
+    <li>
+      <a class="ls__row" href="{{ post.url | relative_url }}">
+        <span class="ls__mode" aria-hidden="true">-rw-r--r--</span>
+        <span class="ls__date">{{ post.date | date: "%Y-%m-%d" }}</span>
+        <span class="ls__name">
+          {%- if post.categories.first %}<span class="ls__cat">{{ post.categories.first }}</span>{% endif -%}
+          {{ post.title }}
+        </span>
+      </a>
+    </li>
+    {%- endfor %}
 
-{% assign posts = "" | split: "" %}
+    {%- comment -%}
+      Drafts live in _drafts/ and are not built, but showing them keeps the
+      index honest about what is coming. Mode bits encode publish state.
+    {%- endcomment -%}
+    {%- for d in site.data.drafts %}
+    <li>
+      <span class="ls__row ls__row--draft">
+        <span class="ls__mode" aria-hidden="true">-rw-------</span>
+        <span class="ls__date">{{ d.date }}</span>
+        <span class="ls__name">
+          <span class="ls__cat">{{ d.category }}</span>{{ d.title }} <em>(draft)</em>
+        </span>
+      </span>
+    </li>
+    {%- endfor %}
+  </ul>
+  <p class="term-note">
+    {{ site.posts | size }} published{% if site.data.drafts %}, {{ site.data.drafts | size }} drafts{% endif %}.
+    Mode bits are the publish state — <code>-rw-------</code> is not live yet.
+  </p>
 
-<!-- Get pinned posts -->
+  <h2 class="term-h">interdot list</h2>
+  <p class="picker__cmd">themes (* = what I'm actually running)</p>
+  <ul class="picker">
+    <li>
+      <button type="button" class="picker__row" data-theme-option="gruvbox-material-light"
+              data-set-theme="light">
+        <span class="picker__star" aria-hidden="true"></span>
+        <span>gruvbox-material-light</span>
+      </button>
+    </li>
+    <li>
+      <button type="button" class="picker__row" data-theme-option="gruvbox-material-dark"
+              data-set-theme="dark">
+        <span class="picker__star" aria-hidden="true"></span>
+        <span>gruvbox-material-dark</span>
+      </button>
+    </li>
+    {%- for t in site.data.themes %}
+    <li>
+      <button type="button" class="picker__row" disabled
+              title="Defined in interdotensional; not yet generated for the web.">
+        <span class="picker__star" aria-hidden="true"></span>
+        <span>{{ t }}</span>
+      </button>
+    </li>
+    {%- endfor %}
+  </ul>
+  <p class="term-note">
+    Same palette that themes my nvim, tmux and zsh — generated from the same
+    source. The greyed rows exist in my dotfiles but aren't wired up here yet.
+  </p>
 
-{% assign offset = paginator.page | minus: 1 | times: paginator.per_page %}
-{% assign pinned_num = pinned.size | minus: offset %}
-
-{% if pinned_num > 0 %}
-  {% for i in (offset..pinned.size) limit: pinned_num %}
-    {% assign posts = posts | push: pinned[i] %}
-  {% endfor %}
-{% else %}
-  {% assign pinned_num = 0 %}
-{% endif %}
-
-<!-- Get default posts -->
-
-{% assign default_beg = offset | minus: pinned.size %}
-
-{% if default_beg < 0 %}
-  {% assign default_beg = 0 %}
-{% endif %}
-
-{% assign default_num = paginator.posts | size | minus: pinned_num  %}
-{% assign default_end = default_beg | plus: default_num | minus: 1 %}
-
-{% if default_num > 0 %}
-  {% for i in (default_beg..default_end) %}
-    {% assign posts = posts | push: default[i] %}
-  {% endfor %}
-{% endif %}
-
-<div id="post-list">
-
-{% for post in posts %}
-
-  <div class="post-preview">
-    <h1>
-      <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
-    </h1>
-
-    <div class="post-content">
-      <p>
-        {% include no-linenos.html content=post.content %}
-        <hr>
-        {{ post.excerpt | truncate: 400 }}
-      </p>
-    </div>
-
-    <div class="post-meta text-muted d-flex">
-      <div class="mr-auto">
-
-        <!-- posted date -->
-        <i class="far fa-calendar fa-fw"></i>
-        {% include datetime.html date=post.date %}
-
-        <!-- categories -->
-        {% if post.categories.size > 0 %}
-          <i class="far fa-folder-open fa-fw"></i>
-          <span>
-          {% for category in post.categories %}
-            {{ category }}
-            {%- unless forloop.last -%},{%- endunless -%}
-          {% endfor %}
-          </span>
-        {% endif %}
-
-      </div>
-
-      {% if post.pin %}
-      <div class="pin">
-        <i class="fas fa-thumbtack fa-fw"></i>
-        <span>{{ site.data.locales[lang].post.pin_prompt }}</span>
-      </div>
-      {% endif %}
-
-    </div> <!-- .post-meta -->
-
-  </div> <!-- .post-review -->
-
-{% endfor %}
-
-</div> <!-- #post-list -->
-
-{% if paginator.total_pages > 0 %}
-  {% include post-paginator.html %}
-{% endif %}
+</div>

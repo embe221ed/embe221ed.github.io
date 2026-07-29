@@ -1,0 +1,599 @@
+/* main.css — "split site"
+ *
+ * Two surfaces, deliberately different:
+ *   .surface-term  homepage / about / 404 — full terminal chrome
+ *   .surface-read  article pages          — no chrome at all
+ * The only thing crossing between them is one mono breadcrumb line.
+ *
+ * Colors come from assets/css/interdot-theme.css (generated). Every var()
+ * here carries a literal fallback so the site stays readable if that file
+ * is ever missing — CSS fails silently and this is the only defence.
+ */
+
+/* ============================================================
+   FONT — Maple Mono, self-hosted (SIL OFL 1.1)
+   ============================================================ */
+@font-face {
+  font-family: "Maple Mono";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("/assets/fonts/MapleMono-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Maple Mono";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/assets/fonts/MapleMono-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Maple Mono";
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: url("/assets/fonts/MapleMono-Italic.woff2") format("woff2");
+}
+
+/* ============================================================
+   SCALE
+   ============================================================ */
+:root {
+  --font: "Maple Mono", "JetBrains Mono", "Monaspace Argon", ui-monospace, monospace;
+
+  /* Body is monospace, so it needs more leading and a wider measure than a
+   * proportional face would: mono runs ~15-20% wider per character, so 72ch
+   * of mono reads like ~62ch of prose. */
+  --fs: 1.0625rem;   /* 17px */
+  --lh: 1.7;
+  --measure: 72ch;
+  --measure-wide: 92ch;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.75rem;
+
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.75rem;
+  --s4: 1rem;
+  --s5: 1.5rem;
+  --s6: 2.25rem;
+  --s7: 3.5rem;
+  --s8: 5.5rem;
+
+  --bar-h: 1.75rem;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--id-bg, #fbf1c7);
+  color: var(--id-fg, #654735);
+  font-family: var(--font);
+  font-size: var(--fs);
+  line-height: var(--lh);
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: var(--id-info, #446e78); }
+a:hover { text-decoration-thickness: 2px; }
+
+:focus-visible {
+  outline: 2px solid var(--id-info, #446e78);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: var(--id-success, #636e2a);
+  color: var(--id-on-accent, #fbf1c7);
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+}
+.skip:focus {
+  left: var(--s4);
+  top: var(--s4);
+  z-index: 100;
+  background: var(--id-bg-deep, #f4e8be);
+  border: 1px solid var(--id-dim, #928374);
+  padding: var(--s2) var(--s3);
+}
+
+.wrap {
+  width: min(var(--measure), 100% - 2rem);
+  margin-inline: auto;
+}
+.wrap-wide {
+  width: min(var(--measure-wide), 100% - 2rem);
+  margin-inline: auto;
+}
+
+/* ============================================================
+   TMUX STATUS BAR — top, matching the author's real config
+   ============================================================ */
+.tmux {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  height: var(--bar-h);
+  background: var(--id-bg-deep, #f4e8be);
+  border-bottom: 1px solid var(--id-dim, #928374);
+  font-size: var(--fs-sm);
+  line-height: var(--bar-h);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tmux::-webkit-scrollbar { display: none; }
+
+.tmux__session {
+  background: var(--id-success, #636e2a);
+  color: var(--id-on-accent, #fbf1c7);
+  font-weight: 700;
+  padding-inline: 0.8ch;
+  white-space: nowrap;
+}
+.tmux__windows {
+  display: flex;
+  gap: 0;
+  flex: 1;
+  min-width: 0;
+}
+.tmux__win {
+  padding-inline: 0.9ch;
+  color: var(--id-muted, #6b665f);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.tmux__win:hover { color: var(--id-fg-strong, #4f3829); }
+.tmux__win[aria-current] {
+  background: var(--id-info, #446e78);
+  color: var(--id-on-accent, #fbf1c7);
+  font-weight: 700;
+}
+.tmux__right {
+  display: flex;
+  align-items: center;
+  gap: 0.9ch;
+  padding-inline: 0.8ch;
+  color: var(--id-muted, #6b665f);
+  white-space: nowrap;
+}
+
+.themebtn {
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--id-dim, #928374);
+  border-radius: 3px;
+  color: var(--id-fg, #654735);
+  padding: 0 0.7ch;
+  line-height: 1.4;
+}
+.themebtn:hover {
+  background: var(--id-panel, #e5d5ad);
+  color: var(--id-fg-strong, #4f3829);
+}
+
+/* ============================================================
+   SURFACE 1 — TERMINAL (home, about, 404)
+   ============================================================ */
+.surface-term { padding-block: var(--s7) var(--s8); }
+
+/* ---- two-line zsh prompt, the author's real one ---- */
+.ps1 {
+  margin: 0 0 var(--s6);
+  font-size: var(--fs);
+  font-weight: 400;
+  line-height: 1.6;
+}
+.ps1__ctx { display: block; }
+.ps1__user { color: var(--id-success, #636e2a); font-weight: 700; }
+.ps1__at { color: var(--id-muted, #6b665f); }
+.ps1__host { color: var(--id-warning, #935c07); }
+.ps1__path { color: var(--id-info, #446e78); }
+.ps1__branch { color: var(--id-special, #8b5878); }
+.ps1__line {
+  display: flex;
+  align-items: baseline;
+  gap: 1ch;
+}
+.ps1__caret { color: var(--id-success, #636e2a); font-weight: 700; }
+.ps1__said { color: var(--id-fg-strong, #4f3829); }
+
+/* Exactly one blinking cursor on the whole site, and it lives here. */
+.cursor {
+  display: inline-block;
+  width: 1ch;
+  height: 1.15em;
+  translate: 0 0.18em;
+  background: var(--id-success, #636e2a);
+  animation: blink 1.06s steps(1) infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cursor { animation: none; }
+}
+
+/* ---- section headings on the terminal surface ---- */
+.term-h {
+  margin: var(--s7) 0 var(--s4);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--id-muted, #6b665f);
+  letter-spacing: 0.04em;
+}
+.term-h::before {
+  content: "❯ ";
+  color: var(--id-success, #636e2a);
+}
+
+/* ---- post index as `ls -la` output ---- */
+.ls {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-variant-numeric: tabular-nums;
+}
+.ls__row {
+  display: grid;
+  grid-template-columns: auto 6.5rem 1fr;
+  gap: 0 1.5ch;
+  align-items: baseline;
+  padding: var(--s1) var(--s2);
+  border-radius: 2px;
+  text-decoration: none;
+  color: inherit;
+}
+a.ls__row:hover,
+a.ls__row:focus-visible {
+  background: var(--id-success, #636e2a);
+  color: var(--id-on-accent, #fbf1c7);
+}
+a.ls__row:hover .ls__mode,
+a.ls__row:hover .ls__date,
+a.ls__row:hover .ls__cat,
+a.ls__row:focus-visible .ls__mode,
+a.ls__row:focus-visible .ls__date,
+a.ls__row:focus-visible .ls__cat { color: inherit; }
+
+.ls__mode {
+  font-size: var(--fs-sm);
+  color: var(--id-dim, #928374);
+}
+.ls__date {
+  font-size: var(--fs-sm);
+  color: var(--id-muted, #6b665f);
+}
+.ls__name { min-width: 0; }
+.ls__cat {
+  color: var(--id-accent2, #a75008);
+  margin-right: 1ch;
+}
+.ls__row--draft { color: var(--id-muted, #6b665f); cursor: default; }
+.ls__row--draft .ls__cat { color: var(--id-dim, #928374); }
+
+@media (max-width: 34rem) {
+  .ls__row {
+    grid-template-columns: auto 1fr;
+  }
+  .ls__mode { display: none; }
+}
+
+/* ---- theme picker, shaped like `interdot list` ---- */
+.picker { margin: 0; padding: 0; list-style: none; }
+.picker__cmd {
+  color: var(--id-muted, #6b665f);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--s2);
+}
+.picker__row {
+  display: flex;
+  align-items: baseline;
+  gap: 1ch;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  background: none;
+  border: 0;
+  border-radius: 2px;
+  padding: var(--s1) var(--s2);
+  color: var(--id-fg, #654735);
+  cursor: pointer;
+}
+.picker__row:hover {
+  background: var(--id-success, #636e2a);
+  color: var(--id-on-accent, #fbf1c7);
+}
+.picker__row[disabled] {
+  color: var(--id-dim, #928374);
+  cursor: not-allowed;
+}
+.picker__row[disabled]:hover { background: none; color: var(--id-dim, #928374); }
+
+/* The `*` marks the author's own active theme, exactly like `interdot list`.
+ * Driven purely off :root so it can never disagree with the stylesheet. */
+.picker__star { width: 1ch; color: var(--id-accent, #935c07); font-weight: 700; }
+.picker__row[data-theme-option="gruvbox-material-light"] .picker__star::before { content: "*"; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .picker__row[data-theme-option="gruvbox-material-light"] .picker__star::before { content: ""; }
+  :root:not([data-theme]) .picker__row[data-theme-option="gruvbox-material-dark"] .picker__star::before { content: "*"; }
+}
+:root[data-theme="dark"] .picker__row[data-theme-option="gruvbox-material-light"] .picker__star::before { content: ""; }
+:root[data-theme="dark"] .picker__row[data-theme-option="gruvbox-material-dark"] .picker__star::before { content: "*"; }
+
+.term-note {
+  color: var(--id-muted, #6b665f);
+  font-size: var(--fs-sm);
+  margin: var(--s3) 0 0;
+}
+
+/* ============================================================
+   SURFACE 2 — READER (articles). No chrome. That is the point.
+   ============================================================ */
+.surface-read { padding-block: var(--s5) var(--s8); }
+
+/* The entire bridge back to surface 1. Resist adding more. */
+.bridge {
+  display: inline-block;
+  margin-bottom: var(--s6);
+  font-size: var(--fs-sm);
+  color: var(--id-muted, #6b665f);
+  text-decoration: none;
+}
+.bridge:hover { color: var(--id-info, #446e78); text-decoration: underline; }
+
+.post__title {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--id-fg-strong, #4f3829);
+  text-wrap: balance;
+}
+.post__meta {
+  margin: var(--s3) 0 var(--s7);
+  font-size: var(--fs-sm);
+  color: var(--id-muted, #6b665f);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.5ch;
+}
+.post__meta a { color: var(--id-accent2, #a75008); }
+
+/* ---- prose ---- */
+.prose > * { margin-block: 0 var(--s5); }
+.prose > :last-child { margin-block-end: 0; }
+
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--id-fg-strong, #4f3829);
+  text-wrap: balance;
+  scroll-margin-block-start: calc(var(--bar-h) + 1.5rem);
+}
+.prose h2 {
+  margin-block: var(--s7) var(--s4);
+  padding-block-end: var(--s2);
+  font-size: var(--fs-lg);
+  border-bottom: 1px solid var(--id-dim, #928374);
+}
+.prose h3 {
+  margin-block: var(--s6) var(--s3);
+  font-size: var(--fs);
+}
+/* h4 in these writeups is almost always a C++ symbol, not a prose heading —
+ * 14 of them run consecutively under `functions`. Treated as identifiers:
+ * same size, distinguished by color and space rather than by scale. */
+.prose h4 {
+  margin-block: var(--s5) var(--s2);
+  font-size: var(--fs);
+  color: var(--id-accent2, #a75008);
+}
+
+.prose h2::before,
+.prose h3::before,
+.prose h4::before {
+  color: var(--id-dim, #928374);
+  font-weight: 400;
+}
+.prose h2::before { content: "## "; }
+.prose h3::before { content: "### "; }
+.prose h4::before { content: "#### "; }
+
+.prose ul,
+.prose ol { padding-inline-start: 3ch; }
+.prose li { margin-block: var(--s1); }
+
+.prose blockquote {
+  margin-inline: 0;
+  padding: var(--s2) 0 var(--s2) 2ch;
+  border-left: 2px solid var(--id-accent, #935c07);
+  color: var(--id-muted, #6b665f);
+}
+.prose blockquote > :last-child { margin-block-end: 0; }
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--id-border, #d5c4a1);
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--id-border, #d5c4a1);
+  margin-block: var(--s6);
+}
+
+/* inline code */
+.prose :not(pre) > code {
+  font-size: 0.9em;
+  background: var(--id-bg-deep, #f4e8be);
+  border: 1px solid var(--id-border, #d5c4a1);
+  border-radius: 3px;
+  padding: 0.06em 0.36em;
+}
+
+/* ---- tables ---- */
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--id-dim, #928374);
+  border-radius: 4px;
+}
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+.prose th,
+.prose td {
+  text-align: left;
+  padding: var(--s2) var(--s3);
+  border-bottom: 1px solid var(--id-border, #d5c4a1);
+}
+.prose thead th {
+  background: var(--id-bg-deep, #f4e8be);
+  color: var(--id-muted, #6b665f);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.prose tbody tr:last-child td { border-bottom: 0; }
+
+/* ---- table of contents ---- */
+.toc {
+  margin-block-end: var(--s7);
+  border: 1px solid var(--id-border, #d5c4a1);
+  border-radius: 4px;
+  background: var(--id-bg-deep, #f4e8be);
+  padding: var(--s3) var(--s4);
+}
+.toc > summary {
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--id-muted, #6b665f);
+  list-style: none;
+}
+.toc > summary::-webkit-details-marker { display: none; }
+.toc > summary::before {
+  content: "▸ ";
+  color: var(--id-success, #636e2a);
+}
+.toc[open] > summary::before { content: "▾ "; }
+.toc > summary:hover { color: var(--id-fg-strong, #4f3829); }
+
+.toc nav {
+  margin-block-start: var(--s3);
+  max-height: 60vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.toc ul { list-style: none; margin: 0; padding: 0; }
+.toc ul ul { padding-inline-start: 2ch; }
+.toc li { margin-block: 0; }
+.toc a {
+  display: block;
+  padding: 0.1rem 0;
+  font-size: var(--fs-sm);
+  color: var(--id-fg, #654735);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.toc a:hover { color: var(--id-info, #446e78); text-decoration: underline; }
+/* h4 entries — the 14-sibling `functions` run. De-emphasised so depth stays
+ * legible instead of becoming a wall. */
+.toc ul ul ul a {
+  font-size: var(--fs-xs);
+  color: var(--id-muted, #6b665f);
+}
+
+/* ============================================================
+   CODE BLOCKS
+   Background is --id-bg-deep in both themes (#f4e8be / #1d2021). Not --id-panel:
+   in dark, danger/accent2/special all fail WCAG AA on #3c3836.
+   ============================================================ */
+.prose .highlighter-rouge,
+.prose div.highlight {
+  margin-block: var(--s5);
+}
+
+/* Code is allowed to break out wider than the prose measure — decompiled C++
+ * signatures need the room and paragraphs do not. Extends RIGHT only, so the
+ * left reading edge never moves across 45 blocks. */
+@media (min-width: 60rem) {
+  .prose .highlighter-rouge,
+  .prose div.highlight,
+  .prose .table-scroll {
+    width: var(--measure-wide);
+    max-width: calc(100vw - 2rem);
+  }
+}
+
+.prose pre {
+  margin: 0;
+  overflow-x: auto;
+  background: var(--id-bg-deep, #f4e8be);
+  border: 1px solid var(--id-dim, #928374);
+  border-radius: 4px;
+  padding: var(--s3) var(--s4);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  tab-size: 4;
+}
+.prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.foot {
+  margin-block-start: var(--s8);
+  padding-block-start: var(--s4);
+  border-top: 1px solid var(--id-border, #d5c4a1);
+  font-size: var(--fs-sm);
+  color: var(--id-muted, #6b665f);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 2ch;
+}
+.foot a { color: var(--id-muted, #6b665f); }
+.foot a:hover { color: var(--id-info, #446e78); }
+
+/* ============================================================
+   ARCHIVE (tag / category pages)
+   ============================================================ */
+.archive__title {
+  margin: 0 0 var(--s5);
+  font-size: var(--fs-lg);
+  color: var(--id-fg-strong, #4f3829);
+}
+.archive__title code { color: var(--id-accent2, #a75008); }

@@ -1,0 +1,9 @@
+# Themes that exist in interdotensional but are not yet generated for the web.
+# Shown greyed out in the `interdot list` picker on the homepage so the list
+# matches reality. Move one up into the live picker once its CSS is generated.
+- catppuccin-frappe
+- catppuccin-latte
+- tokyonight-storm
+- tokyonight-day
+- nord
+- onedarkpro-onedark
