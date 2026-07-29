@@ -10,7 +10,7 @@
     {%- assign p = page.url -%}
     <a class="tmux__win" href="{{ '/' | relative_url }}"
        {% if p == '/' %}aria-current="page"{% endif %}>0:home</a>
-    <a class="tmux__win" href="{{ '/categories/writeup/' | relative_url }}"
+    <a class="tmux__win" href="{{ '/categories/' | relative_url }}"
        {% if p contains '/posts/' or p contains '/categories/' %}aria-current="page"{% endif %}>1:writeups</a>
     <a class="tmux__win" href="{{ '/tags/' | relative_url }}"
        {% if p contains '/tags/' %}aria-current="page"{% endif %}>2:tags</a>

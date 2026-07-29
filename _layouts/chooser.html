@@ -1,0 +1,64 @@
+---
+layout: default
+---
+{%- comment -%}
+  Index for /tags/ and /categories/. jekyll-archives only generates the
+  per-term pages, so without this the nav link lands on a bare directory
+  listing. Shaped like `choose-tree`: name, a proportional bar, and a count.
+
+  page.chooser picks the collection: "tags" or "categories".
+{%- endcomment -%}
+{%- if page.chooser == "categories" -%}
+  {%- assign terms = site.categories -%}
+  {%- assign base = "/categories/" -%}
+{%- else -%}
+  {%- assign terms = site.tags -%}
+  {%- assign base = "/tags/" -%}
+{%- endif -%}
+
+{%- assign sorted = terms | sort -%}
+{%- assign label = page.chooser | default: "tags" -%}
+
+<div class="wrap surface-term">
+  <div class="panes">
+    <section class="pane">
+      <span class="pane__title">{{ site.author.name }}@blog:~/{{ label }}</span>
+
+      <h1 class="ps1">
+        <span class="ps1__line">
+          <span class="ps1__caret" aria-hidden="true">❯</span>
+          <span class="ps1__said">choose-tree {{ page.chooser | default: "tags" }}</span>
+        </span>
+      </h1>
+
+      <ul class="chooser">
+        {%- for t in sorted %}
+        {%- assign name = t[0] %}
+        {%- assign n = t[1].size %}
+        {%- comment -%}
+          One mark per post, not a normalised bar: with a handful of posts a
+          normalised bar puts every term at full width, which reads as noise.
+          This starts subtle and grows as the archive does.
+        {%- endcomment -%}
+        {%- assign w = n %}{% if w > 24 %}{% assign w = 24 %}{% endif %}
+        <li>
+          <a class="chooser__row" href="{{ base | append: name | append: '/' | relative_url }}">
+            <span class="chooser__key">{{ name }}</span>
+            <span class="chooser__bar" aria-hidden="true">{% for i in (1..w) %}▪{% endfor %}</span>
+            <span class="chooser__count">{{ n }}</span>
+          </a>
+        </li>
+        {%- endfor %}
+      </ul>
+
+      {%- if sorted.size == 0 %}
+      <p class="term-note">Nothing here yet.</p>
+      {%- else %}
+      <p class="term-note">
+        {{ sorted.size }} {{ page.chooser | default: "tags" }} across
+        {{ site.posts | size }} post{% if site.posts.size != 1 %}s{% endif %}.
+      </p>
+      {%- endif %}
+    </section>
+  </div>
+</div>

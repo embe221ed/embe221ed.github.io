@@ -195,9 +195,67 @@ a:hover { text-decoration-thickness: 2px; }
 }
 
 /* ============================================================
+   PANE — a tmux split.
+   Mirrors the author's real config: single-line borders, title drawn ON the
+   top border (pane-border-status top), rounded corners, and exactly one
+   active pane whose border and title take the accent colour.
+   Borders are CSS, never box-drawing characters — they stay crisp at any
+   zoom, reflow on mobile, and never end up in a text selection.
+   ============================================================ */
+.panes {
+  display: grid;
+  gap: var(--s5);
+}
+@media (min-width: 56rem) {
+  /* `|` split: the listing takes the larger share, the picker sits beside it,
+     the same way you would actually lay this session out. */
+  .panes--split {
+    grid-template-columns: 1.55fr 1fr;
+    align-items: start;
+  }
+}
+
+.pane {
+  position: relative;
+  border: 1px solid var(--id-pane-border, #8d877d);
+  border-radius: 4px;
+  padding: var(--s5) var(--s4) var(--s4);
+  min-width: 0;
+}
+
+/* The title sits in a gap punched through the top border. */
+.pane__title {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 1.5ch;
+  translate: 0 -50%;
+  padding-inline: 0.6ch;
+  background: var(--id-bg, #fbf1c7);
+  font-size: var(--fs-sm);
+  color: var(--id-pane-border, #8d877d);
+  white-space: nowrap;
+  max-width: calc(100% - 3ch);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* tmux always has exactly one active pane. The first is active until the
+   reader's pointer or keyboard focus moves to another one. */
+.panes:not(:has(.pane:hover, .pane:focus-within)) > .pane:first-child,
+.pane:hover,
+.pane:focus-within {
+  border-color: var(--id-pane-active, #a15335);
+}
+.panes:not(:has(.pane:hover, .pane:focus-within)) > .pane:first-child > .pane__title,
+.pane:hover > .pane__title,
+.pane:focus-within > .pane__title {
+  color: var(--id-pane-active, #a15335);
+}
+
+/* ============================================================
    SURFACE 1 — TERMINAL (home, about, 404)
    ============================================================ */
-.surface-term { padding-block: var(--s7) var(--s8); }
+.surface-term { padding-block: var(--s6) var(--s8); }
 
 /* ---- two-line zsh prompt, the author's real one ---- */
 .ps1 {
@@ -534,27 +592,34 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 }
 .prose tbody tr:last-child td { border-bottom: 0; }
 
-/* ---- table of contents ---- */
-.toc {
-  margin-block-end: var(--s7);
-  border: 1px solid var(--id-border, #d5c4a1);
-  border-radius: 4px;
-  background: var(--id-bg-deep, #f4e8be);
-  padding: var(--s3) var(--s4);
-}
+/* ---- table of contents ----
+ * A pane, like everything else that is chrome rather than prose. Entries carry
+ * the same `##` / `###` / `####` prefixes the headings themselves use, so the
+ * contents read as an outline of the markdown source rather than as a widget.
+ * The prefixes are ::before with empty alt text — a screen reader gets the
+ * heading name, not a run of hashes. */
+.toc-pane { margin-block-end: var(--s7); }
+.toc { margin: 0; }
 .toc > summary {
   cursor: pointer;
   font-size: var(--fs-sm);
   color: var(--id-muted, #6b665f);
   list-style: none;
+  display: flex;
+  gap: 1ch;
 }
 .toc > summary::-webkit-details-marker { display: none; }
 .toc > summary::before {
-  content: "▸ ";
+  content: "❯";
   color: var(--id-success, #636e2a);
+  rotate: 90deg;
+  transition: rotate 120ms ease;
 }
-.toc[open] > summary::before { content: "▾ "; }
+.toc:not([open]) > summary::before { rotate: 0deg; }
 .toc > summary:hover { color: var(--id-fg-strong, #4f3829); }
+@media (prefers-reduced-motion: reduce) {
+  .toc > summary::before { transition: none; }
+}
 
 .toc nav {
   margin-block-start: var(--s3);
@@ -563,20 +628,32 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
   overscroll-behavior: contain;
 }
 .toc ul { list-style: none; margin: 0; padding: 0; }
-.toc ul ul { padding-inline-start: 2ch; }
+.toc ul ul { padding-inline-start: 1.5ch; }
 .toc li { margin-block: 0; }
 .toc a {
   display: block;
-  padding: 0.1rem 0;
+  padding: 0.08rem 0;
   font-size: var(--fs-sm);
   color: var(--id-fg, #654735);
   text-decoration: none;
   overflow-wrap: anywhere;
 }
-.toc a:hover { color: var(--id-info, #446e78); text-decoration: underline; }
-/* h4 entries — the 14-sibling `functions` run. De-emphasised so depth stays
- * legible instead of becoming a wall. */
-.toc ul ul ul a {
+.toc a::before {
+  color: var(--id-dim, #928374);
+  margin-inline-end: 0.6ch;
+}
+.toc > nav > ul > li > a::before { content: "##" / ""; }
+.toc > nav > ul > li > ul > li > a::before { content: "###" / ""; }
+.toc > nav > ul > li > ul > li > ul > li > a::before { content: "####" / ""; }
+.toc a:hover {
+  color: var(--id-bg, #fbf1c7);
+  background: var(--id-success, #636e2a);
+  border-radius: 2px;
+}
+.toc a:hover::before { color: inherit; }
+/* h4 entries — the 14-sibling `functions` run. De-emphasised so the depth
+ * stays legible instead of becoming a wall. */
+.toc > nav > ul > li > ul > li > ul > li > a {
   font-size: var(--fs-xs);
   color: var(--id-muted, #6b665f);
 }
@@ -639,6 +716,58 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 }
 .foot a { color: var(--id-muted, #6b665f); }
 .foot a:hover { color: var(--id-info, #446e78); }
+
+/* ============================================================
+   CHOOSER — /tags/ and /categories/ index pages.
+   Shaped like the author's `choose-tree` binding, whose format is
+   "[#{window_name} @ path]": a name, a count, and a selection row you move
+   through. Replaces what would otherwise be a bare directory listing.
+   ============================================================ */
+.chooser {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.chooser__row {
+  display: grid;
+  grid-template-columns: 1.5ch auto 1fr auto;
+  gap: 0 1ch;
+  align-items: baseline;
+  padding: var(--s1) var(--s2);
+  border-radius: 2px;
+  text-decoration: none;
+  color: var(--id-fg, #654735);
+}
+.chooser__row::before {
+  content: "";
+  color: var(--id-success, #636e2a);
+  font-weight: 700;
+}
+.chooser__row:hover,
+.chooser__row:focus-visible {
+  background: var(--id-success, #636e2a);
+  color: var(--id-bg, #fbf1c7);
+}
+.chooser__row:hover::before,
+.chooser__row:focus-visible::before {
+  content: "❯" / "";
+  color: inherit;
+}
+.chooser__key { color: var(--id-accent2, #a65009); }
+.chooser__row:hover .chooser__key,
+.chooser__row:focus-visible .chooser__key,
+.chooser__row:hover .chooser__count,
+.chooser__row:focus-visible .chooser__count { color: inherit; }
+.chooser__bar {
+  color: var(--id-dim, #928374);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.chooser__count {
+  color: var(--id-muted, #6b665f);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
 
 /* ============================================================
    ARCHIVE (tag / category pages)

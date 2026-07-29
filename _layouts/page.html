@@ -2,18 +2,20 @@
 layout: default
 ---
 <div class="wrap surface-term">
-  <h1 class="ps1">
-    <span class="ps1__ctx">
-      <span class="ps1__user">{{ site.author.name }}</span><span class="ps1__at">@</span><span class="ps1__host">blog</span>
-      <span class="ps1__path">~/{{ page.title | slugify }}</span>
-    </span>
-    <span class="ps1__line">
-      <span class="ps1__caret" aria-hidden="true">❯</span>
-      <span class="ps1__said">cat {{ page.title | slugify }}.md</span>
-    </span>
-  </h1>
+  <div class="panes">
+    <section class="pane">
+      <span class="pane__title">{{ site.author.name }}@blog:~/{{ page.title | slugify }}</span>
 
-  <div class="prose">
-    {{ content }}
+      <h1 class="ps1">
+        <span class="ps1__line">
+          <span class="ps1__caret" aria-hidden="true">❯</span>
+          <span class="ps1__said">cat {{ page.title | slugify }}.md</span>
+        </span>
+      </h1>
+
+      <div class="prose">
+        {{ content }}
+      </div>
+    </section>
   </div>
 </div>

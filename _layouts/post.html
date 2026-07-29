@@ -35,13 +35,22 @@ layout: default
     <span>{{ content | number_of_words | divided_by: 200 | plus: 1 }} min</span>
   </div>
 
+  {%- comment -%}
+    The contents are chrome, not prose, so they get a pane. The article body
+    below stays deliberately bare — that contrast is the design.
+    <summary> must be the first child of <details>, so the pane title (which
+    is absolutely positioned anyway) sits on the wrapper.
+  {%- endcomment -%}
   {%- if page.toc %}
-  <details class="toc" open>
-    <summary>contents</summary>
-    <nav aria-label="Table of contents">
-      {{ content | toc_only }}
-    </nav>
-  </details>
+  <section class="pane toc-pane">
+    <span class="pane__title">toc</span>
+    <details class="toc" open>
+      <summary>contents</summary>
+      <nav aria-label="Table of contents">
+        {{ content | toc_only }}
+      </nav>
+    </details>
+  </section>
   {%- endif %}
 
  </div>

@@ -34,6 +34,8 @@
   --id-special: #8b5878;
   --id-warning: #925c07;
   --id-danger: #b43e3e;
+  --id-pane-active: #a15335;
+  --id-pane-border: #8d877d;
 
   /* Inert provenance: readable from JS or devtools, consumed by no rule. */
   --id-author-theme: "gruvbox-material-light";
@@ -61,6 +63,8 @@
     --id-special: #d3869b;
     --id-warning: #d8a657;
     --id-danger: #ea6962;
+    --id-pane-active: #d4967e;
+    --id-pane-border: #8d877d;
   }
 }
 
@@ -84,6 +88,8 @@
   --id-special: #8b5878;
   --id-warning: #925c07;
   --id-danger: #b43e3e;
+  --id-pane-active: #a15335;
+  --id-pane-border: #8d877d;
 }
 
 :root[data-theme="dark"] {
@@ -103,4 +109,6 @@
   --id-special: #d3869b;
   --id-warning: #d8a657;
   --id-danger: #ea6962;
+  --id-pane-active: #d4967e;
+  --id-pane-border: #8d877d;
 }

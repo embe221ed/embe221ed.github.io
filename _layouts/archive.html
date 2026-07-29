@@ -5,34 +5,36 @@ layout: default
   Serves jekyll-archives for both /tags/:name/ and /categories/:name/.
 {%- endcomment -%}
 <div class="wrap surface-term">
-  <h1 class="ps1">
-    <span class="ps1__ctx">
-      <span class="ps1__user">{{ site.author.name }}</span><span class="ps1__at">@</span><span class="ps1__host">blog</span>
-      <span class="ps1__path">~/writeups</span>
-    </span>
-    <span class="ps1__line">
-      <span class="ps1__caret" aria-hidden="true">❯</span>
-      <span class="ps1__said">rg --{{ page.type }} {{ page.title }}</span>
-    </span>
-  </h1>
+  <div class="panes">
+    <section class="pane">
+      <span class="pane__title">{{ site.author.name }}@blog:~/{{ page.type }}s/{{ page.title }}</span>
 
-  <h2 class="archive__title">
-    {{ page.type }}: <code>{{ page.title }}</code>
-    <span class="term-note">{{ page.posts | size }} post{% if page.posts.size != 1 %}s{% endif %}</span>
-  </h2>
-
-  <ul class="ls">
-    {%- for post in page.posts %}
-    <li>
-      <a class="ls__row" href="{{ post.url | relative_url }}">
-        <span class="ls__mode" aria-hidden="true">-rw-r--r--</span>
-        <span class="ls__date">{{ post.date | date: "%Y-%m-%d" }}</span>
-        <span class="ls__name">
-          {%- if post.categories.first %}<span class="ls__cat">{{ post.categories.first }}</span>{% endif -%}
-          {{ post.title }}
+      <h1 class="ps1">
+        <span class="ps1__line">
+          <span class="ps1__caret" aria-hidden="true">❯</span>
+          <span class="ps1__said">rg --{{ page.type }} {{ page.title }}</span>
         </span>
-      </a>
-    </li>
-    {%- endfor %}
-  </ul>
+      </h1>
+
+      <ul class="ls">
+        {%- for post in page.posts %}
+        <li>
+          <a class="ls__row" href="{{ post.url | relative_url }}">
+            <span class="ls__mode" aria-hidden="true">-rw-r--r--</span>
+            <span class="ls__date">{{ post.date | date: "%Y-%m-%d" }}</span>
+            <span class="ls__name">
+              {%- if post.categories.first %}<span class="ls__cat">{{ post.categories.first }}</span>{% endif -%}
+              {{ post.title }}
+            </span>
+          </a>
+        </li>
+        {%- endfor %}
+      </ul>
+
+      <p class="term-note">
+        {{ page.posts | size }} match{% if page.posts.size != 1 %}es{% endif %}.
+        <a href="{{ '/' | append: page.type | append: 's/' | relative_url }}">all {{ page.type }}s</a>
+      </p>
+    </section>
+  </div>
 </div>

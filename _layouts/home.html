@@ -2,89 +2,102 @@
 layout: default
 ---
 {%- comment -%}
-  Surface 1: full terminal. There is no long-form reading to protect here, so
-  the entire terminal budget is spent on this page.
+  Surface 1: full terminal. Laid out as tmux splits — one pane per component,
+  titles drawn on the top border in the author's real pane-border-format
+  (#{user}@#{host_short}:path), exactly one pane active at a time.
 {%- endcomment -%}
-<div class="wrap surface-term">
+<div class="wrap-wide surface-term">
 
-  <h1 class="ps1">
-    <span class="ps1__ctx">
-      <span class="ps1__user">{{ site.author.name }}</span><span class="ps1__at">@</span><span class="ps1__host">blog</span>
-      <span class="ps1__path">~/writeups</span>
-      <span class="ps1__branch">⎇ main</span>
-    </span>
-    <span class="ps1__line">
-      <span class="ps1__caret" aria-hidden="true">❯</span>
-      <span class="ps1__said">{{ site.tagline }}</span><span class="cursor" aria-hidden="true"></span>
-    </span>
-  </h1>
+  <div class="panes">
 
-  <h2 class="term-h">ls -la ~/writeups</h2>
-  <ul class="ls">
-    {%- for post in site.posts %}
-    <li>
-      <a class="ls__row" href="{{ post.url | relative_url }}">
-        <span class="ls__mode" aria-hidden="true">-rw-r--r--</span>
-        <span class="ls__date">{{ post.date | date: "%Y-%m-%d" }}</span>
-        <span class="ls__name">
-          {%- if post.categories.first %}<span class="ls__cat">{{ post.categories.first }}</span>{% endif -%}
-          {{ post.title }}
+    <section class="pane">
+      <span class="pane__title">{{ site.author.name }}@blog:~</span>
+      <h1 class="ps1">
+        <span class="ps1__ctx">
+          <span class="ps1__user">{{ site.author.name }}</span><span class="ps1__at">@</span><span class="ps1__host">blog</span>
+          <span class="ps1__path">~</span>
+          <span class="ps1__branch">⎇ main</span>
         </span>
-      </a>
-    </li>
-    {%- endfor %}
-
-    {%- comment -%}
-      Drafts live in _drafts/ and are not built, but showing them keeps the
-      index honest about what is coming. Mode bits encode publish state.
-    {%- endcomment -%}
-    {%- for d in site.data.drafts %}
-    <li>
-      <span class="ls__row ls__row--draft">
-        <span class="ls__mode" aria-hidden="true">-rw-------</span>
-        <span class="ls__date">{{ d.date }}</span>
-        <span class="ls__name">
-          <span class="ls__cat">{{ d.category }}</span>{{ d.title }} <em>(draft)</em>
+        <span class="ps1__line">
+          <span class="ps1__caret" aria-hidden="true">❯</span>
+          <span class="ps1__said">{{ site.tagline }}</span><span class="cursor" aria-hidden="true"></span>
         </span>
-      </span>
-    </li>
-    {%- endfor %}
-  </ul>
-  <p class="term-note">
-    {{ site.posts | size }} published{% if site.data.drafts %}, {{ site.data.drafts | size }} drafts{% endif %}.
-    Mode bits are the publish state — <code>-rw-------</code> is not live yet.
-  </p>
+      </h1>
+      <p class="term-note">{{ site.description | strip_newlines | strip }}</p>
+    </section>
 
-  <h2 class="term-h">interdot list</h2>
-  <p class="picker__cmd">themes (* = what I'm actually running)</p>
-  <ul class="picker">
-    <li>
-      <button type="button" class="picker__row" data-theme-option="gruvbox-material-light"
-              data-set-theme="light">
-        <span class="picker__star" aria-hidden="true"></span>
-        <span>gruvbox-material-light</span>
-      </button>
-    </li>
-    <li>
-      <button type="button" class="picker__row" data-theme-option="gruvbox-material-dark"
-              data-set-theme="dark">
-        <span class="picker__star" aria-hidden="true"></span>
-        <span>gruvbox-material-dark</span>
-      </button>
-    </li>
-    {%- for t in site.data.themes %}
-    <li>
-      <button type="button" class="picker__row" disabled
-              title="Defined in interdotensional; not yet generated for the web.">
-        <span class="picker__star" aria-hidden="true"></span>
-        <span>{{ t }}</span>
-      </button>
-    </li>
-    {%- endfor %}
-  </ul>
-  <p class="term-note">
-    Same palette that themes my nvim, tmux and zsh — generated from the same
-    source. The greyed rows exist in my dotfiles but aren't wired up here yet.
-  </p>
+    <div class="panes panes--split">
 
+      <section class="pane">
+        <span class="pane__title">{{ site.author.name }}@blog:~/writeups</span>
+        <h2 class="term-h">ls -la</h2>
+        <ul class="ls">
+          {%- for post in site.posts %}
+          <li>
+            <a class="ls__row" href="{{ post.url | relative_url }}">
+              <span class="ls__mode" aria-hidden="true">-rw-r--r--</span>
+              <span class="ls__date">{{ post.date | date: "%Y-%m-%d" }}</span>
+              <span class="ls__name">
+                {%- if post.categories.first %}<span class="ls__cat">{{ post.categories.first }}</span>{% endif -%}
+                {{ post.title }}
+              </span>
+            </a>
+          </li>
+          {%- endfor %}
+          {%- for d in site.data.drafts %}
+          <li>
+            <span class="ls__row ls__row--draft">
+              <span class="ls__mode" aria-hidden="true">-rw-------</span>
+              <span class="ls__date">{{ d.date }}</span>
+              <span class="ls__name">
+                <span class="ls__cat">{{ d.category }}</span>{{ d.title }} <em>(draft)</em>
+              </span>
+            </span>
+          </li>
+          {%- endfor %}
+        </ul>
+        <p class="term-note">
+          {{ site.posts | size }} published{% if site.data.drafts %}, {{ site.data.drafts | size }} draft{% if site.data.drafts.size != 1 %}s{% endif %}{% endif %}.
+          Mode bits are the publish state.
+        </p>
+      </section>
+
+      <section class="pane">
+        <span class="pane__title">{{ site.author.name }}@blog:~/.config/interdot</span>
+        <h2 class="term-h">interdot list</h2>
+        <p class="picker__cmd">themes (* = what I'm running)</p>
+        <ul class="picker">
+          <li>
+            <button type="button" class="picker__row" data-theme-option="gruvbox-material-light"
+                    data-set-theme="light">
+              <span class="picker__star" aria-hidden="true"></span>
+              <span>gruvbox-material-light</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="picker__row" data-theme-option="gruvbox-material-dark"
+                    data-set-theme="dark">
+              <span class="picker__star" aria-hidden="true"></span>
+              <span>gruvbox-material-dark</span>
+            </button>
+          </li>
+          {%- for t in site.data.themes %}
+          <li>
+            <button type="button" class="picker__row" disabled
+                    title="Defined in interdotensional; not yet generated for the web.">
+              <span class="picker__star" aria-hidden="true"></span>
+              <span>{{ t }}</span>
+            </button>
+          </li>
+          {%- endfor %}
+        </ul>
+        <p class="term-note">
+          Same palette that themes my nvim, tmux and zsh, generated from the
+          same source.
+        </p>
+      </section>
+
+    </div>
+
+  </div>
 </div>
