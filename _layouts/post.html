@@ -6,7 +6,12 @@ layout: default
   glyphs, no cursor. The single mono breadcrumb below is the whole bridge back
   to surface 1. Resist adding anything else.
 {%- endcomment -%}
-<article class="wrap surface-read">
+{%- comment -%}
+  wrap-wide, not wrap: the .prose grid keeps text at --measure and lets code
+  break out into the remaining track. The header block stays at --measure.
+{%- endcomment -%}
+<article class="wrap-wide surface-read">
+ <div class="post__head">
 
   <a class="bridge" href="{{ '/' | relative_url }}">~/posts/{{ page.date | date: "%Y" }}/{{ page.title | slugify }}</a>
 
@@ -38,6 +43,8 @@ layout: default
     </nav>
   </details>
   {%- endif %}
+
+ </div>
 
   <div class="prose">
     {{ content | inject_anchors }}

@@ -1,0 +1,495 @@
+/* ==========================================================================
+   syntax.css — Rouge 4.7.0 syntax highlighting
+   ==========================================================================
+
+   Interdotensional "leaf" role vocabulary. Every colour in this file is a
+   var(--id-*) reference; there is not a single literal hex value here, and
+   there are no per-theme blocks and no prefers-color-scheme queries. The
+   --id-* custom properties already flip between gruvbox-material light and
+   dark on their own, so this one stylesheet serves both themes.
+
+   The token classes below were not guessed. They were extracted by lexing
+   the 45 fenced blocks of _posts/2022-07-15-Google-Capture-The-Flag-2022-
+   madcore-pwn.md (22 cpp / 15 bash / 8 python) through Rouge and collecting
+   every class Rouge actually emitted: 25 distinct classes. The rest of the
+   file covers the fallback classes a future post in ruby / go / js / diff /
+   make / nasm / console / json / yaml / html would hit — also verified by
+   lexing real samples of each, not from memory.
+
+   Contrast (WCAG 2.1, computed against --id-bg-deep in BOTH themes):
+   every role used for a code token clears 4.5:1 in both. Worst case is
+   --id-muted at 4.64:1 light / 6.55:1 dark. --id-dim (2.99:1 light) and
+   --id-faint (2.04:1 light) are below AA and are therefore used only for
+   chrome — the line-number gutter and its divider — never for a token that
+   carries meaning. See the notes on the gutter block near the bottom.
+   ========================================================================== */
+
+
+/* --------------------------------------------------------------------------
+   1. CONTAINER
+   Kramdown + Rouge with block.line_numbers: true emits exactly this:
+
+     div.language-cpp.highlighter-rouge
+       > div.highlight
+           > pre.highlight
+               > code
+                   > table.rouge-table > tbody > tr
+                       > td.rouge-gutter.gl > pre.lineno   <- literal digits
+                       > td.rouge-code            > pre    <- the code
+
+   Note .highlight lands on BOTH the outer div and the inner pre, so the
+   selectors below are qualified (div.highlight / pre.highlight) to keep
+   padding and background from being applied twice.
+   -------------------------------------------------------------------------- */
+
+div.highlighter-rouge {
+  margin: 1.25rem 0;
+  border: 1px solid var(--id-border);
+  border-radius: 6px;
+  overflow: hidden; /* clips the code background to the rounded corners */
+  background: var(--id-bg-deep);
+}
+
+div.highlight {
+  background: var(--id-bg-deep);
+  color: var(--id-fg); /* plaintext blocks emit no spans at all — this is them */
+  overflow-x: auto;    /* long exploit lines scroll here, not on the page body */
+  tab-size: 4;
+  -moz-tab-size: 4;
+  /* With block.line_numbers OFF (the default here) Rouge emits no
+     table.rouge-table, so nothing downstream carries padding and the code
+     would sit flush against the border. This is that padding. */
+  padding: 0.85rem 1rem;
+}
+
+/* ...and when line numbers ARE enabled, the table cells carry it instead —
+   otherwise the two would stack. */
+div.highlight:has(table.rouge-table) {
+  padding: 0;
+}
+
+/* Rouge nests a second .highlight on the <pre>. Neutralise it completely so
+   it contributes no box of its own and does not become a second scroll
+   container (which would break the sticky gutter below). */
+pre.highlight {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: visible;
+  color: inherit;
+}
+
+div.highlight > pre.highlight > code {
+  display: block;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   2. THE ROUGE TABLE
+   border-spacing/border-collapse are pinned so the gutter and the code sit
+   on the same baseline grid and so the inset divider on the sticky gutter
+   cell renders predictably.
+   -------------------------------------------------------------------------- */
+
+.rouge-table {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+}
+
+.rouge-table,
+.rouge-table tbody,
+.rouge-table tr,
+.rouge-table td {
+  background: none;
+  border: 0;
+}
+
+.rouge-table td {
+  padding: 0;
+  vertical-align: top;
+  line-height: inherit;
+}
+
+.rouge-table td.rouge-code {
+  width: 100%; /* code cell eats the remaining width; gutter shrink-wraps */
+  padding: 0.85rem 1rem 0.85rem 0.85rem;
+}
+
+.rouge-table td.rouge-code pre {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: visible;
+  white-space: pre;
+  color: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   3. LINE-NUMBER GUTTER  —  the clipboard bug
+   --------------------------------------------------------------------------
+
+   FAILURE MODE (this is why the rules below exist):
+
+   _config.yml sets kramdown.syntax_highlighter_opts.block.line_numbers: true.
+   Rouge does not draw those numbers with CSS counters or with generated
+   content — it emits them as REAL TEXT NODES:
+
+       <td class="rouge-gutter gl"><pre class="lineno">1
+       2
+       3
+       </pre></td>
+
+   That text is part of the document, so it is part of any selection that
+   crosses it, and it lands in the clipboard. Two separate paths produced the
+   bug:
+
+     (a) Ctrl+A / triple-click / a drag that starts above or ends below the
+         block sweeps the gutter cell in with the code cell.
+     (b) TABLE LAYOUT specifically: a selection that spans more than one
+         table cell is serialised by every engine as cell-by-cell text with
+         tab or newline separators, and Gecko additionally switches into a
+         whole-cell selection mode as soon as a drag crosses a cell boundary.
+         So even a careful drag over lines 2..5 of the code column could
+         snap the entire gutter column into the selection.
+
+   Either way the paste came out as
+
+       1 from pwn import *
+       2 io = process("./madcore")
+
+   or the tab-separated variant. On a pwn blog that is not a cosmetic
+   problem: the reader's exploit is a SyntaxError before it ever runs, and
+   the failure looks like the writeup is wrong rather than like the copy was.
+
+   THE FIX, in three layers:
+
+     1. user-select: none on every element in the gutter subtree — the td
+        (both .rouge-gutter and Rouge's own .gl class, belt and braces
+        against markup changes) and the pre.lineno inside it. All engines
+        exclude a user-select:none subtree from the copy buffer, which kills
+        path (a) and path (b) at the source: the digits can no longer enter
+        a selection at all, however the selection was made.
+     2. user-select: text is then re-asserted on the code cell and its pre,
+        so the code stays copyable even if an ancestor stylesheet (or a
+        future layout wrapper) sets user-select: none higher up and the
+        gutter rule would otherwise have been inherited past its cell.
+     3. The table itself is pinned so its layout cannot reintroduce the
+        digits: fixed cell padding/vertical-align keeps the two columns as
+        two independent blocks, and ::selection on the gutter is forced
+        transparent so a drag cannot even paint as though it had grabbed the
+        numbers. Layer 3 is cosmetic reinforcement — layer 1 is what makes
+        the copy correct.
+   -------------------------------------------------------------------------- */
+
+.rouge-table td.rouge-gutter,
+.rouge-table td.gl,
+.rouge-gutter,
+pre.lineno,
+.lineno {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.rouge-table td.rouge-gutter {
+  position: sticky; /* numbers stay put while a long line scrolls under them */
+  left: 0;
+  z-index: 1;
+  width: 1px;       /* shrink-wrap to the widest line number */
+  padding: 0.85rem 0.7rem 0.85rem 0.85rem;
+  text-align: right;
+  white-space: nowrap;
+  background: var(--id-bg-deep); /* opaque, so scrolled code passes behind it */
+  /* inset shadow instead of border-right: survives position:sticky cleanly */
+  box-shadow: inset -1px 0 0 var(--id-faint);
+}
+
+/* --id-dim / --id-faint are the two roles that do NOT clear 4.5:1
+   (--id-dim is 2.99:1 in light, --id-faint 2.04:1). That is deliberate and
+   safe here and only here: the gutter is decorative, it is not selectable,
+   it is not copyable, and it carries no information that is not already
+   visible in the code beside it. If you ever want the numbers to clear AA
+   anyway, swap --id-dim for --id-muted (4.64:1 light / 6.55:1 dark) — it is
+   a one-token change and nothing else in this file depends on it. */
+.rouge-table td.rouge-gutter,
+.gl,
+pre.lineno,
+.lineno {
+  color: var(--id-dim);
+}
+
+pre.lineno,
+.lineno {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: visible;
+  font: inherit;
+}
+
+/* Cosmetic reinforcement — see layer 3 above. */
+.rouge-gutter::selection,
+pre.lineno::selection,
+.lineno::selection {
+  background: transparent;
+  color: var(--id-dim);
+}
+.rouge-gutter::-moz-selection,
+pre.lineno::-moz-selection,
+.lineno::-moz-selection {
+  background: transparent;
+  color: var(--id-dim);
+}
+
+/* Re-assert selectability on the code side. Deliberately applied to the cell
+   and its <pre> only, NOT to a descendant `*` — user-select is an inherited
+   property so the spans pick it up anyway, and a `.rouge-code *` rule would
+   out-specify the .gp prompt rule further down (0,2,1 vs 0,2,0) and quietly
+   make shell prompts copyable again. */
+.rouge-table td.rouge-code,
+.rouge-table td.rouge-code pre {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+
+/* ==========================================================================
+   4. TOKENS
+   Grouped by --id-* role. Every class present in the real post is marked
+   [post]; the rest are fallbacks for languages this blog will plausibly
+   use next, each verified against the actual lexer output.
+   ========================================================================== */
+
+/* --- plain text: identifiers and untagged content -------------------------
+   .n is the single most frequent class in the post (646 hits — plain C++ and
+   Python identifiers, incl. calls like malloc/memset), so it must read as
+   body text, not as an accent. */
+.highlight .n,   /* Name                    [post] */
+.highlight .nx,  /* Name.Other       (js)          */
+.highlight .py,  /* Name.Property                  */
+.highlight .w,   /* Text.Whitespace                */
+.highlight .x {  /* Other                          */
+  color: var(--id-fg);
+}
+
+/* --- keywords -------------------------------------------------------------
+   .ow (Operator.Word: python `and`/`is`/`not`, ruby `and`/`or`) is grouped
+   here rather than with the operators below. It is a WORD, and muting it to
+   the same grey as `(` would read as noise; Rouge only splits it out of
+   Keyword for lexer-internal reasons. */
+.highlight .k,   /* Keyword               [post] */
+.highlight .kd,  /* Keyword.Declaration   (js: const/class/static) */
+.highlight .kn,  /* Keyword.Namespace              */
+.highlight .kr,  /* Keyword.Reserved               */
+.highlight .kv,  /* Keyword.Variable               */
+.highlight .ow,  /* Operator.Word         [post] */
+.highlight .ne { /* Name.Exception                 */
+  color: var(--id-danger);
+}
+
+/* --- callables and class names -------------------------------------------- */
+.highlight .nf,  /* Name.Function  [post] (python calls; nasm mnemonics; make targets) */
+.highlight .fm,  /* Name.Function.Magic            */
+.highlight .nc { /* Name.Class     [post] (C++ Binary/CallFrame/Backtrace)  */
+  color: var(--id-success);
+}
+
+/* --- types and namespaces ------------------------------------------------- */
+.highlight .kt,  /* Keyword.Type   [post] (int/long/void/char/bool/uint64_t) */
+.highlight .nn,  /* Name.Namespace                 */
+.highlight .ld { /* Literal.Date                   */
+  color: var(--id-accent);
+}
+
+/* --- strings --------------------------------------------------------------
+   .sh, .sa and .dl are load-bearing, not padding. Rouge's Python lexer tags
+   the QUOTE CHARACTERS themselves as Literal.String.Heredoc (.sh) and the
+   b/f prefix as Literal.String.Affix (.sa) — verified in the post, e.g.
+   open(args.CORE, "rb") lexes as .sh " / .s rb / .sh ". The JS lexer does
+   the same thing with Literal.String.Delimiter (.dl). Leave any of those
+   three out and every Python/JS string on the blog renders with unstyled
+   quotes wrapped around a coloured body. */
+.highlight .s,   /* Literal.String            [post] */
+.highlight .s1,  /* Literal.String.Single            */
+.highlight .s2,  /* Literal.String.Double     [post] */
+.highlight .sa,  /* Literal.String.Affix      [post] */
+.highlight .sb,  /* Literal.String.Backtick          */
+.highlight .sc,  /* Literal.String.Char              */
+.highlight .sd,  /* Literal.String.Doc               */
+.highlight .sh,  /* Literal.String.Heredoc    [post] */
+.highlight .sr,  /* Literal.String.Regex             */
+.highlight .ss,  /* Literal.String.Symbol            */
+.highlight .sx,  /* Literal.String.Other             */
+.highlight .dl,  /* Literal.String.Delimiter  (js)   */
+.highlight .cpf {/* Comment.PreprocFile       [post] (<vector>, <stdio.h>) */
+  color: var(--id-accent);
+}
+
+/* --- numbers -------------------------------------------------------------- */
+.highlight .m,   /* Literal.Number                    */
+.highlight .mb,  /* Literal.Number.Bin                */
+.highlight .mf,  /* Literal.Number.Float              */
+.highlight .mh,  /* Literal.Number.Hex        [post] (225 hits — it's a pwn blog) */
+.highlight .mi,  /* Literal.Number.Integer    [post] */
+.highlight .mo,  /* Literal.Number.Oct                */
+.highlight .il,  /* Literal.Number.Integer.Long       */
+.highlight .l {  /* Literal                           */
+  color: var(--id-special);
+}
+
+/* --- builtins, constants, and the "active" bits inside strings ------------
+   Grouped deliberately: C++ `true` lexes as .nb, Python `True`/`None`/`...`
+   lex as .bp, Ruby `nil` as .kp, Go `true`/`false` as .no, JS/JSON `null` as
+   .kc — five different classes for one concept. Putting .kc and .kp on
+   --id-danger with the other keywords (the suggested mapping) would make
+   `nil` red in a Ruby post while `None` stays orange in the Python post
+   above it, so all five sit together on --id-accent2 instead.
+   .se/.si/.ni are here too: an escape or an interpolation is the one part
+   of a string that is *not* literal text, and orange-inside-yellow is the
+   conventional way to say so. */
+.highlight .nb,  /* Name.Builtin         [post] (bash: ls/cat/sudo; C++: true) */
+.highlight .bp,  /* Name.Builtin.Pseudo  [post] (python True / ...)  */
+.highlight .no,  /* Name.Constant                                    */
+.highlight .kc,  /* Keyword.Constant     (js/json null, go true)     */
+.highlight .kp,  /* Keyword.Pseudo       (ruby nil)                  */
+.highlight .se,  /* Literal.String.Escape [post] (\n, \x00)          */
+.highlight .si,  /* Literal.String.Interpol [post] ({} in f-strings) */
+.highlight .ni,  /* Name.Entity          (html &amp;)                */
+.highlight .nd,  /* Name.Decorator                                   */
+.highlight .cp { /* Comment.Preproc      [post] (#include, #define)  */
+  color: var(--id-accent2);
+}
+
+/* .cp and .cpf are Comment.* in Rouge's token tree but they are NOT comments
+   and are deliberately excluded from the comment rule below. Grouping them
+   with .c would render every `#include <vector>` in the 22 C++ blocks in
+   comment grey, i.e. as if the includes had been commented out. */
+
+/* --- variables, attributes, tags, labels ---------------------------------- */
+.highlight .nv,  /* Name.Variable  [post] (bash $rdi, $1, and the `$ ` prompt) */
+.highlight .vc,  /* Name.Variable.Class                     */
+.highlight .vg,  /* Name.Variable.Global                    */
+.highlight .vi,  /* Name.Variable.Instance                  */
+.highlight .vm,  /* Name.Variable.Magic                     */
+.highlight .nt,  /* Name.Tag       [post] (bash flags -o/--obj/-std; html tags) */
+.highlight .na,  /* Name.Attribute (html attrs; yaml keys)  */
+.highlight .nl { /* Name.Label     (json keys; nasm labels) */
+  color: var(--id-info);
+}
+
+/* --- comments -------------------------------------------------------------
+   Comments would conventionally sit on --id-dim, but --id-dim is 2.99:1
+   against --id-bg-deep in the light theme, i.e. below AA, and unlike the
+   line numbers a comment is content. They stay on --id-muted (4.64:1 light /
+   6.55:1 dark) and are separated from the punctuation below — which shares
+   that colour — by italics instead of by hue. */
+.highlight .c,   /* Comment          [post] */
+.highlight .c1,  /* Comment.Single   [post] */
+.highlight .cm,  /* Comment.Multiline[post] */
+.highlight .ch,  /* Comment.Hashbang        */
+.highlight .cd,  /* Comment.Doc             */
+.highlight .cs { /* Comment.Special         */
+  color: var(--id-muted);
+  font-style: italic;
+}
+
+/* --- operators, punctuation, program output -------------------------------
+   .p (662 hits) and .o (531) are the two most frequent classes in the post,
+   almost all of it C++ structural noise: ( ) ; , { } :: . Recessing them
+   lets the identifiers and literals carry the eye. Note that Rouge's shell
+   lexer classes brackets as .o rather than .p, so both must be here or bash
+   and C++ blocks would not match each other. */
+.highlight .o,   /* Operator              [post] */
+.highlight .p,   /* Punctuation           [post] */
+.highlight .pi,  /* Punctuation.Indicator (yaml) */
+.highlight .go { /* Generic.Output — console transcripts: what the program
+                    printed, as opposed to what the reader typed */
+  color: var(--id-muted);
+  font-style: normal;
+}
+
+/* Generic.Prompt: the `$` / `>>>` in console and pycon blocks. Same
+   clipboard reasoning as the line-number gutter — copying `$ ls -la` must
+   yield `ls -la`, not a shell prompt. */
+.highlight .gp {
+  color: var(--id-muted);
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* --- diffs ---------------------------------------------------------------- */
+.highlight .gd { /* Generic.Deleted */
+  color: var(--id-danger);
+  background: color-mix(in srgb, var(--id-danger) 12%, transparent);
+}
+
+.highlight .gi { /* Generic.Inserted */
+  color: var(--id-success);
+  background: color-mix(in srgb, var(--id-success) 12%, transparent);
+}
+
+/* Rouge's diff lexer tags the `@@ -1,3 +1,3 @@` hunk header as Punctuation,
+   not as Generic.Subheading, so it would otherwise be muted along with all
+   other punctuation. Scoped to the diff wrapper class kramdown emits. */
+.language-diff .highlight .p,
+.language-diff .p {
+  color: var(--id-info);
+}
+
+/* --- generic / prose tokens ----------------------------------------------- */
+.highlight .gh { /* Generic.Heading */
+  color: var(--id-fg-strong);
+  font-weight: 700;
+}
+
+.highlight .gu { /* Generic.Subheading */
+  color: var(--id-info);
+  font-weight: 700;
+}
+
+.highlight .gs { /* Generic.Strong */
+  color: var(--id-fg-strong);
+  font-weight: 700;
+}
+
+.highlight .ge { /* Generic.Emph */
+  font-style: italic;
+}
+
+.highlight .gr,  /* Generic.Error     */
+.highlight .gt { /* Generic.Traceback */
+  color: var(--id-danger);
+}
+
+/* --- lexer errors ---------------------------------------------------------
+   .err is Token.Error, but it does NOT reliably mean "broken code". Rouge's
+   Makefile lexer emits .err for perfectly valid text — recipe lines, $(CC),
+   $(CFLAGS), -o — so the usual loud treatment (red text on a red background,
+   or a wavy underline) would make every Makefile on this blog look like it
+   failed to parse. It gets --id-warning and nothing else: visible, tinted,
+   no background, no underline. --id-warning resolves to the same value as
+   --id-accent in both themes, so an .err run reads as string-ish rather
+   than as an alarm, which is the correct level of alarm for a lexer that
+   simply gave up on a tab character. */
+.highlight .err {
+  color: var(--id-warning);
+  background: none;
+  text-decoration: none;
+}

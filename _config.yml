@@ -51,8 +51,10 @@ kramdown:
     span:
       line_numbers: false
     block:
-      # Real digits in a <td class="gutter"> would ride along on copy and break
-      # any pasted exploit. Numbers are drawn with CSS counters instead.
+      # Off deliberately. Rouge renders line numbers as REAL TEXT DIGITS in a
+      # <td class="gutter">, which ride along on copy — paste an exploit and
+      # you get "1 from pwn import *", which does not run. assets/css/syntax.css
+      # carries the user-select:none mitigation if you ever want them back.
       line_numbers: false
 
 excerpt_separator: <!--more-->

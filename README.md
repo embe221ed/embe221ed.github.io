@@ -107,7 +107,9 @@ the generated file must still leave a readable site; test that occasionally.
   madcore URL is the one that is indexed; lowercase 404s.
 - `/feed.xml` **and** `/atom.xml` are both live and both have subscribers.
   `feed.xml` comes from `jekyll-feed`, `atom.xml` is hand-written. Keep both.
-- Code block line numbers are drawn with CSS counters, not Rouge's text
-  gutter — otherwise copying an exploit yields `1 from pwn import *`.
+- Code block line numbers are **off** on purpose. Rouge emits them as real
+  text digits, so copying an exploit yields `1 from pwn import *`.
+  `syntax.css` has the `user-select: none` mitigation ready if you want them
+  back — flip `line_numbers` in `_config.yml`.
 - Pin the Ruby version in CI. Never `latest`: Ruby ships a major every
   December 25th, and 4.0 broke Jekyll on release day.
