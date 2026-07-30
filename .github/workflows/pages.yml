@@ -27,9 +27,15 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          # Pinned deliberately. Never use 'latest' here: Ruby ships a major
-          # every December 25th and 4.0 broke Jekyll on release day.
-          ruby-version: "3.4"
+          # Pinned deliberately, and pinned to match Gemfile.lock rather than to
+          # a "safe old" version. The lock was resolved on 4.0.2 and records
+          # BUNDLED WITH 4.0.6, so building it on 3.4 asks bundler 4 to run on a
+          # Ruby the lock was never resolved against — a failure mode that shows
+          # up as a resolution error on the first deploy rather than locally.
+          # Never "latest": Ruby ships a major every December 25th, and 4.0
+          # removed logger/erb from the default gems, which broke Jekyll on
+          # release day (why the Gemfile lists them explicitly).
+          ruby-version: "4.0"
           bundler-cache: true
 
       - uses: actions/configure-pages@v5
