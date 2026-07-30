@@ -3,11 +3,29 @@ layout: default
 ---
 {%- comment -%}
   Serves jekyll-archives for both /tags/:name/ and /categories/:name/.
+
+  jekyll-archives sets page.type to the SINGULAR — "category" or "tag" — while
+  the index each one belongs to is the plural in _config.yml's permalinks. This
+  layout used to build both the label and the href as `page.type | append: "s"`,
+  which is right for tags by luck and gives "categorys" for the other half: a
+  dead /categorys/ link and a wrong word, on every category page. English
+  plurals are not a string operation, so the two forms are written out.
+
+  Both enabled types are covered. Adding one to `jekyll-archives.enabled` means
+  adding it here too, or its pages get an empty href.
 {%- endcomment -%}
+{%- case page.type -%}
+{%- when "category" -%}
+  {%- assign index_path = "/categories/" -%}
+  {%- assign index_name = "categories" -%}
+{%- when "tag" -%}
+  {%- assign index_path = "/tags/" -%}
+  {%- assign index_name = "tags" -%}
+{%- endcase -%}
 <div class="wrap surface-term">
   <div class="panes">
     <section class="pane">
-      <span class="pane__title">{{ site.author.name }}@blog:~/{{ page.type }}s/{{ page.title }}</span>
+      <span class="pane__title">{{ site.author.name }}@blog:~/{{ index_name }}/{{ page.title }}</span>
 
       {%- comment -%}
         %c is the term directory this pane is in — ~/tags/pwn gives `pwn`.
@@ -25,7 +43,7 @@ layout: default
 
       <p class="term-note">
         {{ page.posts | size }} match{% if page.posts.size != 1 %}es{% endif %}.
-        <a href="{{ '/' | append: page.type | append: 's/' | relative_url }}">all {{ page.type }}s</a>
+        <a href="{{ index_path | relative_url }}">all {{ index_name }}</a>
       </p>
     </section>
   </div>
