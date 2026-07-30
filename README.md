@@ -35,8 +35,92 @@ tags: pwn binexp googlectf     # space-separated string, or [a, b, c]
 | `categories` | none | generates `/categories/<name>/` |
 | `tags` | none | generates `/tags/<name>/` per tag |
 | `series` / `part` | none | reserved for multi-part writeups; nothing reads them yet |
+| `checksec` | none | the header pane's rows, written by hand — see below |
+| `ctf` | none | challenge metadata; adds rows to the same pane — see below |
 
 Put `<!--more-->` after the opening paragraph to control the excerpt.
+
+### The checksec block
+
+The pane between the metadata line and the article is `checksec` output. Any
+post can have one. A post that declares nothing renders **no pane at all** —
+there is no empty state to look at.
+
+```yaml
+checksec:
+  - Topic:  interdotensional
+  - Status: in progress
+```
+
+One row per entry, in your order. The label is written once, as itself, and
+whatever case you type is what renders. The dashes are optional — a plain
+mapping does exactly the same thing, so a forgotten `-` costs you nothing:
+
+```yaml
+checksec:
+  Topic:  interdotensional
+  Status: in progress
+```
+
+A value may be a map when the row needs more than plain text:
+
+| key | notes |
+|-----|-------|
+| `text` | the value. Defaults to `url`, so a bare `url:` is already a whole row |
+| `url` | makes the value a link |
+| `state` | `good` `bad` `warn` `note` — colours the VALUE. Labels are never coloured, the same way checksec never colours them |
+
+```yaml
+checksec:
+  - Repo:
+      text: embe221ed/interdotensional
+      url:  https://github.com/embe221ed/interdotensional
+  - Fuzzing:
+      text:  no coverage yet
+      state: bad
+```
+
+`state` is emphasis, never the message. **Write the word too** — `no coverage
+yet` is red *and* says so, because a reader who cannot see the red still has to
+get the point. An unrecognised `state` is dropped rather than guessed at.
+
+A label with no value renders nothing.
+
+#### Rows a `ctf:` block adds
+
+Every key is optional; an absent one is simply a row you do not get.
+
+| key | row | notes |
+|-----|-----|-------|
+| `event` | `Event` | a slug into `_data/events.yml`. An unlisted slug prints itself, so a one-off CTF never blocks the post |
+| `category` | `Category` | the challenge's category on the scoreboard — not the post's `categories` |
+| `remote` | `Remote` | turns red and gains `(offline)` once the event's `ends` date is past |
+| `points` | `Points` | |
+| `solves` | `Solves` | |
+| `difficulty` | `Difficulty` | |
+| `attachments` | `Files` | a list of `{name, url}`; `name` defaults to the url. They stack one per line |
+| `ctftime` | `CTFtime` | the **task** id. The **event** id lives in `_data/events.yml` — different namespace, different URL |
+| `with` | `Solved` | co-solvers. You are always the first name, and this row is always green |
+
+`Ends` / `Ended` is the event's own date, out of `_data/events.yml`. It is not
+the post's date, and that is deliberate — see the bite list.
+
+#### Both at once
+
+Derived rows come first, in the table's order; your own rows follow, in yours.
+**A row you write beats a derived row with the same label** (case ignored),
+which also makes an empty row the way to delete one:
+
+```yaml
+ctf:
+  event:    googlectf-2022
+  category: pwn
+  remote:   madcore.2022.ctfcompetition.com:1337
+checksec:
+  Category: web              # replaces the derived `pwn`
+  Remote:                    # deletes the derived Remote row outright
+  Arch:     amd64-64-little  # a row nothing derives
+```
 
 ### Drafts
 
@@ -75,8 +159,9 @@ it. Press `.` on the GitHub repo to edit and commit from a browser.
 _posts/            the writeups
 _drafts/           not built
 _layouts/          default, home, post, page, archive
-_includes/         tmux-bar
+_includes/         tmux-bar, ps1, ls-row, read-time, checksec
 _data/             themes.yml, drafts.yml — homepage index data
+                   events.yml — one row per CTF, shared by its writeups
 assets/css/        interdot-theme.css (generated), main.css, syntax.css
 assets/fonts/      Maple Mono, self-hosted (SIL OFL 1.1)
 ```
@@ -113,3 +198,15 @@ the generated file must still leave a readable site; test that occasionally.
   back — flip `line_numbers` in `_config.yml`.
 - Pin the Ruby version in CI. Never `latest`: Ruby ships a major every
   December 25th, and 4.0 broke Jekyll on release day.
+- The checksec block prints the **event's** date and never the post's. The
+  metadata line directly above it already carries the post date in the same
+  `%Y-%m-%d` format, and a second copy two lines down says nothing new. So if
+  the `Ends` / `Ended` row is missing, the thing to fix is `ends:` in
+  `_data/events.yml` — nothing about the post will bring it back.
+- An event missing from `_data/events.yml` is **not** an error: the slug prints
+  as its own name. What you lose is the `Ends` / `Ended` row and the ability of
+  the `Remote` row to ever go offline, because both are that file's `ends` key.
+  A dead host advertised as live is the failure mode worth knowing about.
+- `checksec:` labels are matched against derived rows by lowercasing them.
+  `Remote`, `remote` and `REMOTE` are one label, and the last thing to claim it
+  is the one you wrote.

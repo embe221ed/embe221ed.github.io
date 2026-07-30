@@ -59,11 +59,13 @@ layout: default
   </div>
 
   {%- comment -%}
-    The challenge metadata, in the author's own pwntools log format. Renders
-    nothing at all unless the post carries a `ctf:` block with `event` and
-    `category`, so a non-CTF article never sees it.
+    The header block, as `checksec` output. Rows come from a post's own
+    `checksec:` list, from its `ctf:` block, or from both; a post that declares
+    neither renders no block at all, not an empty pane. Nothing here is
+    CTF-only any more — see the include for the schema and for why the date it
+    prints is the event's rather than the post's.
   {%- endcomment -%}
-  {%- include chal-card.html %}
+  {%- include checksec.html %}
 
   {%- comment -%}
     The contents are chrome, not prose, so they get a pane. The article body

@@ -1,0 +1,32 @@
+{%- comment -%}
+  One `checksec` row: a label in the aligned column, then a value.
+
+  Real checksec prints
+
+      RELRO:    Full RELRO
+      Stack:    Canary found
+
+  and colours the VALUE — green when the mitigation is good, red when it is
+  not. The label is never coloured, in any of pwntools' output. That split is
+  the whole colour model here: `state` paints the <dd> and never the <dt>.
+
+  The trailing colon is drawn by CSS, not written here, so it stays out of a
+  copied selection and out of the accessible name — <dt>/<dd> already say
+  "term" and "definition" without punctuation helping.
+
+    label  the label, written as itself. Escaped here.
+    text   the value as plain text. Escaped here.
+    html   the value as pre-built markup, for a value that needs a link.
+           Takes precedence over `text`; the CALLER escapes it.
+    state  good | bad | warn | note. Anything else is dropped rather than
+           emitted as a class, so a typo cannot invent a colour.
+
+  Colour is never the only carrier (WCAG 1.4.1): every stated row this site
+  emits also says the word — `offline`, `solved`. A row written by hand in
+  front matter is the author's to word, which is why the README says so.
+{%- endcomment -%}
+{%- assign st = include.state | default: "" -%}
+{%- assign known = "good,bad,warn,note" | split: "," -%}
+{%- unless known contains st %}{% assign st = "" %}{% endunless -%}
+<dt>{{ include.label | escape }}</dt>
+<dd{% if st != "" %} class="chk__v--{{ st }}"{% endif %}>{% if include.html %}{{ include.html }}{% else %}{{ include.text | escape }}{% endif %}</dd>

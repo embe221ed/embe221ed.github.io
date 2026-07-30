@@ -4,7 +4,7 @@
 # the same CTF costs two lines of front matter, not eight. That is the whole
 # reason this file exists — every mandatory field is friction.
 #
-# An event with no row here is not an error. _includes/chal-card.html falls
+# An event with no row here is not an error. _includes/checksec.html falls
 # back to printing `ctf.event` verbatim, so a one-off CTF never blocks a post
 # on a data-file edit.
 #
@@ -12,10 +12,17 @@
 #   url      the event's own site, if it still resolves
 #   ctftime  ctftime.org EVENT id. `ctf.ctftime` in a post is the TASK id —
 #            different namespace, different URL.
-#   ends     last day of the event. Once it is past, the challenge's `remote`
-#            row flips from [*] to [-]: the service is gone, and pointing a
-#            2026 reader at a host that stopped resolving in 2022 is worse
-#            than saying so.
+#   ends     last day of the event, and the only date the checksec block ever
+#            prints. The post's own date is already the first thing in
+#            .post__meta, so repeating it there would say nothing; when the
+#            COMPETITION ran is the fact the header was missing.
+#
+#            It does two jobs. It draws the `Ends:` row — relabelled `Ended:`
+#            once it is past, because the tense is not optional — and it flips
+#            the `Remote:` row to red with the word `(offline)`. The service
+#            behind a CTF remote is torn down with the event, and pointing a
+#            2026 reader at a host that stopped resolving in 2022 without
+#            saying so is worse than not listing it.
 
 googlectf-2022:
   name:    Google CTF 2022

@@ -7,10 +7,14 @@ tags:   pwn binexp googlectf
 toc:    true
 categories: writeup
 
-# Challenge metadata. `event` and `category` are the only required keys; every
-# other one renders nothing when absent, so a writeup never waits on a form.
-# `event` is a key into _data/events.yml, which holds the CTF's name, site and
-# CTFtime id once instead of once per challenge.
+# Challenge metadata, drawn as `checksec` output above the article. NOTHING
+# here is required — every key renders a row when present and nothing when
+# absent, so a writeup never waits on a form. `event` is a key into
+# _data/events.yml, which holds the CTF's name, site, CTFtime id and end date
+# once instead of once per challenge.
+#
+# A post that is not a CTF writeup writes its own rows under `checksec:`
+# instead; the two can also be combined. See the README.
 ctf:
   event:    googlectf-2022
   category: pwn

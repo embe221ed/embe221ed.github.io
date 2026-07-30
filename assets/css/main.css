@@ -1210,27 +1210,106 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 }
 body:has(#copymode:checked) .keyhint { color: var(--id-pane-active, #a15335); }
 
-/* CTF-01 — the challenge card, in pwntools' own log format. `_msgtype_prefixes`
- * is `[*]` info, `[+]` success, `[-]` failure, `[!]` warning, `[x]` status;
- * the bracket is aria-hidden in the markup so the ROW LABEL carries the
- * meaning and the hue is the redundant channel, not the only one. */
-.chal-pane { margin-block-start: var(--s5); }
-.chal { display: flex; flex-direction: column; gap: var(--s1); font-size: var(--fs-sm); }
-.chal__row {
-  display: grid;
-  grid-template-columns: 12.5ch minmax(0, 1fr);
-  gap: 0 1ch;
+/* CHK-01 — the post header block, in checksec's own output shape.
+ *
+ * The aligned `Label:` column IS the component, so it is ONE grid on the <dl>
+ * rather than one grid per row. The per-row version this replaces only lined
+ * up because every label track was hardcoded to 12.5ch, and a schema that lets
+ * a post name its own rows cannot promise anything about label width.
+ * fit-content() gives the real behaviour: the column is as wide as the longest
+ * label actually present, and never wider than 18ch — past that a runaway
+ * label wraps inside its own column instead of shoving every value off the
+ * page.
+ *
+ * `overflow-wrap: anywhere` on both cells is load-bearing, and `break-word`
+ * will NOT do: fit-content() floors at the item's min-content size, so one
+ * unbroken 60-character token still outvotes the 18ch cap — and `anywhere` is
+ * the only one of the two that shrinks min-content. Same reason the value
+ * column is minmax(0, 1fr) rather than 1fr. With both, nothing in this block
+ * can force the page sideways and none of it needs an overflow-x container. */
+/* Not a pane — see the include for why. Output sits under the metadata line
+ * with the same air a pane had, so removing the frame did not move anything. */
+/* Both margins, because this is no longer a pane. A .pane carried its own
+ * padding, so the block only ever needed a top margin; stripped of the frame it
+ * had nothing holding the toc pane off its last row, and `Solved:` rendered
+ * behind the toc's top border. */
+.chk-block { margin-block: var(--s5) var(--s6); }
+
+/* `❯ checksec <slug>`. The two colours are copied from .ps1__caret and
+ * .ps1__said rather than sharing their selectors: the reader surface has no
+ * prompt component on purpose — no git context, no cursor, no user@host — and
+ * reusing that component to borrow two colours would drag the rest in. */
+.chk__cmd {
+  display: flex;
   align-items: baseline;
+  gap: 1ch;
+  margin: 0 0 var(--s3);
+  font-size: var(--fs-sm);
 }
-.chal__row dt { color: var(--id-muted, #6b665f); }
-.chal__row dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
-.chal__p { font-weight: 700; }
-.chal__row--info .chal__p    { color: var(--id-info, #436d77); }
-.chal__row--success .chal__p { color: var(--id-success, #626d2a); }
-.chal__row--danger .chal__p  { color: var(--id-danger, #b43e3e); }
-.chal__row--warning .chal__p { color: var(--id-warning, #925c07); }
-.chal__row--special .chal__p { color: var(--id-special, #8b5878); }
-.chal__sep { color: var(--id-dim, #928374); }
+.chk__caret { color: var(--id-success, #626d2a); font-weight: 700; }
+.chk__said { color: var(--id-fg-strong, #4f3829); }
+
+/* The <dt>/<dd> pairs are DIRECT children — no per-row wrapper — because grid
+ * only shares a track between siblings. The known cost is that WebKit drops a
+ * <dl>'s list semantics once it is display:grid; the accepted trade is that
+ * DOM order still reads label-then-value for every row, which is the whole of
+ * what this block has to say. The wrapper version it replaces had the same
+ * exposure and no shared column. */
+.chk {
+  display: grid;
+  grid-template-columns: fit-content(18ch) minmax(0, 1fr);
+  gap: var(--s1) 1ch;
+  align-items: baseline;
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+/* pwntools colours the value and never the label — in checksec, in log output,
+ * anywhere. The label is structure, so it takes the structural grey.
+ * --id-muted, 5.01:1 light / 5.89:1 dark. Not --id-dim (3.24:1) and never
+ * --id-faint (2.21:1); neither is legal as text on this ground. */
+.chk dt {
+  color: var(--id-muted, #6b665f);
+  overflow-wrap: anywhere;
+}
+/* The colon is drawn, not written. It belongs to the column rather than to the
+ * term, so it stays out of a copied selection and out of the accessible name
+ * that <dt> already carries. */
+.chk dt::after { content: ":" / ""; }
+
+.chk dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--id-fg, #654735);
+  overflow-wrap: anywhere;
+}
+
+/* ...and it colours the value by whether the thing is good or bad. Every
+ * stated row this site emits also says the word — `offline`, `Solved` — so the
+ * hue is the second channel and never the only one (WCAG 1.4.1).
+ * Contrast on --id-bg, light / dark:
+ *   good 4.95 / 6.72   bad 5.00 / 4.70   warn 4.93 / 6.68   note 5.01 / 5.94 */
+.chk dd.chk__v--good { color: var(--id-success, #626d2a); }
+.chk dd.chk__v--bad { color: var(--id-danger, #b43e3e); }
+.chk dd.chk__v--warn { color: var(--id-warning, #925c07); }
+.chk dd.chk__v--note { color: var(--id-info, #436d77); }
+
+/* Links here take .post__meta's link colour, not the global --id-info one:
+ * info is a state in this block, and a link wearing it would be
+ * indistinguishable from a `note` value. --id-accent2, 4.91:1 / 5.72:1. */
+.chk dd a { color: var(--id-accent2, #a65009); }
+/* A stated value owns its hue outright, link included — a second colour inside
+ * it would claim a second meaning. The underline still marks the link. */
+.chk dd:is(.chk__v--good, .chk__v--bad, .chk__v--warn, .chk__v--note) a {
+  color: inherit;
+}
+
+/* A list-valued row — the handout files. One item per line inside the value,
+ * so the row grows downward and the label column is untouched. */
+.chk__stack {
+  display: flex;
+  flex-direction: column;
+}
 
 /* SHIP-02 — the /archives/ year heading, in the `ls -R` shape: a directory
  * line, then its contents. */

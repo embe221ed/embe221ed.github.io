@@ -1,0 +1,285 @@
+{%- comment -%}
+  The post header block, drawn as `checksec` output.
+
+  Not cosplay: this post's own transcripts already carry pwntools output, and
+  checksec is pwntools. The shape being borrowed is
+
+      ❯ checksec ./madcore
+      [*] '/home/user/ctf/madcore'
+          Arch:     amd64-64-little
+          RELRO:    Full RELRO
+          Stack:    Canary found
+
+  ── what is kept, and what is not ────────────────────────────────────────────
+
+  The aligned `Label:` column is the signature and it is kept whole. The two
+  header lines are judged separately, because they are not worth the same:
+
+    * `❯ checksec <name>` STAYS. It is the only line that names the verb, and
+      without it the rows below are a definition list rather than the output of
+      something. The pane title says where you are; this says what was run.
+      Its payload is the word `checksec`, which is new.
+
+    * `[*] '/home/user/ctf/madcore'` GOES. It is an absolute path, and the pane
+      border directly above it already reads
+      `embe221ed@blog:~/posts/2022/madcore` — that is pane-border-format's
+      `#{pane_current_path}`. Printing the cwd twice, two lines apart, is the
+      thing `choose-tree tags` was killed for. One line, no new facts, cut.
+
+  ── what belongs in here AT ALL ──────────────────────────────────────────────
+
+  .post__meta, immediately above, renders date · category · tags · read-time.
+  The rule that keeps this block from restating it:
+
+      .post__meta describes the ARTICLE. checksec describes its SUBJECT.
+
+  checksec runs on the binary, never on the writeup about it. So:
+
+    * DATE. The article's publication date is .post__meta's, it is already on
+      screen in this exact format, and repeating it is a literal duplicate two
+      centimetres away. The date a CTF writeup's header is actually missing is
+      when the COMPETITION was — 2022-07-03 for madcore, twelve days before the
+      post. That is the date this block carries, from _data/events.yml. The
+      author's complaint stands answered: the date has its own row, and it now
+      says something the page did not already say.
+
+    * CATEGORY. .post__meta shows `categories.first` — `writeup`, the kind of
+      article. `ctf.category` is `pwn`, the challenge's category on the
+      scoreboard. Same column, different claim, and it is a property of the
+      subject, so it stays.
+
+    * TEAM has no row. Every page's footer already ends
+      `embe221ed — justCatTheFish`, so a per-post row would be identical on
+      every post and carry nothing. `Solved` carries the people instead, and
+      varies with `ctf.with`.
+
+  ── the schema ───────────────────────────────────────────────────────────────
+
+  Generic first, CTF second. Any post may write its own rows:
+
+      checksec:
+        - Topic:  interdotensional
+        - Status: in progress
+
+  Ordering is the author's, and each label is written once, as itself. Both
+  YAML shapes are accepted — a sequence of single-key maps as above, or a plain
+  mapping with no dashes — because a forgotten `-` producing a silently empty
+  block is exactly the friction this rebuild exists to delete. See the loop at
+  the bottom for how the two are told apart.
+
+  A post with a `ctf:` block additionally gets rows derived from it and from
+  _data/events.yml. Derived rows come first, in a fixed order; the author's own
+  rows follow, in the author's order. A hand-written row whose label matches a
+  derived one (case-insensitively) WINS and the derived row is dropped — which
+  also makes an empty hand-written row the way to suppress a derived row.
+
+  Every key is optional at every level and an absent key renders nothing. A
+  post with nothing to declare renders NO BLOCK — not an empty pane, not a
+  header with no rows below it. That is why the rows are captured first and
+  measured before any of the chrome is emitted.
+{%- endcomment -%}
+
+{%- comment -%}
+  Pass one: the labels the post claimed for itself, as `|a|b|c|`, so a derived
+  row can ask `own contains "|remote|"` in one string compare rather than
+  re-walking the list once per row.
+{%- endcomment -%}
+{%- capture own -%}
+|
+{%- for item in page.checksec -%}
+  {%- if item[0] -%}
+    {{- item[0] | downcase | strip -}}|
+  {%- else -%}
+    {%- for pair in item -%}{{ pair[0] | downcase | strip }}|{%- endfor -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- endcapture -%}
+
+{%- capture rows -%}
+
+{%- comment -%} ---- derived: the CTF rows ---------------------------------- {%- endcomment -%}
+{%- assign c = page.ctf -%}
+{%- if c -%}
+  {%- assign ev = site.data.events[c.event] -%}
+  {%- comment -%}
+    An unlisted event still renders: the slug becomes its own display name, so
+    a one-off CTF never blocks a post on a data-file edit.
+  {%- endcomment -%}
+  {%- assign ev_name = ev.name | default: c.event -%}
+
+  {%- unless own contains "|event|" -%}{%- if c.event -%}
+    {%- capture v -%}
+      {%- if ev.url -%}<a href="{{ ev.url | escape }}">{{ ev_name | escape }}</a>
+      {%- else -%}{{ ev_name | escape }}{%- endif -%}
+    {%- endcapture -%}
+    {%- include checksec-row.html label="Event" html=v -%}
+  {%- endif -%}{%- endunless -%}
+
+  {%- unless own contains "|category|" -%}{%- if c.category -%}
+    {%- include checksec-row.html label="Category" text=c.category -%}
+  {%- endif -%}{%- endunless -%}
+
+  {%- comment -%}
+    Tense, not colour: `Ends` while the CTF is running, `Ended` once it is not.
+    No `ends` in _data/events.yml means no claim either way, and no row.
+  {%- endcomment -%}
+  {%- assign now_s = site.time | date: "%s" | plus: 0 -%}
+  {%- assign ends_s = ev.ends | date: "%s" | plus: 0 -%}
+  {%- assign over = false -%}
+  {%- if ev.ends and ends_s < now_s %}{% assign over = true %}{% endif -%}
+  {%- if over %}{% assign ends_label = "Ended" %}{% else %}{% assign ends_label = "Ends" %}{% endif -%}
+  {%- comment -%}
+    Both spellings are checked, not just the one today's calendar produces. The
+    label flips with the event's end date, so an author overriding it cannot
+    know which word to write — and claiming the wrong one used to render BOTH
+    rows, two dates contradicting each other.
+  {%- endcomment -%}
+  {%- assign ends_claimed = false -%}
+  {%- if own contains "|ends|" or own contains "|ended|" %}{% assign ends_claimed = true %}{% endif -%}
+  {%- unless ends_claimed -%}{%- if ev.ends -%}
+    {%- assign ends_text = ev.ends | date: "%Y-%m-%d" -%}
+    {%- include checksec-row.html label=ends_label text=ends_text -%}
+  {%- endif -%}{%- endunless -%}
+
+  {%- comment -%}
+    The service behind a CTF remote is torn down with the event, so once `ends`
+    is past the honest value is not the host alone — it is the host plus the
+    assessment of it, exactly as checksec's value is `No canary found` rather
+    than a bare word tinted red. The word `offline` carries the meaning; the
+    red is the second channel, never the only one.
+  {%- endcomment -%}
+  {%- unless own contains "|remote|" -%}{%- if c.remote -%}
+    {%- if over -%}
+      {%- capture v %}{{ c.remote | escape }} (offline){% endcapture -%}
+      {%- include checksec-row.html label="Remote" html=v state="bad" -%}
+    {%- else -%}
+      {%- include checksec-row.html label="Remote" text=c.remote -%}
+    {%- endif -%}
+  {%- endif -%}{%- endunless -%}
+
+  {%- comment -%}
+    Points and solves were one middot-joined row and are now two. They are two
+    numbers about two different things; nothing was ever gained by the line
+    they shared.
+  {%- endcomment -%}
+  {%- unless own contains "|points|" -%}{%- if c.points -%}
+    {%- include checksec-row.html label="Points" text=c.points -%}
+  {%- endif -%}{%- endunless -%}
+
+  {%- unless own contains "|solves|" -%}{%- if c.solves -%}
+    {%- include checksec-row.html label="Solves" text=c.solves -%}
+  {%- endif -%}{%- endunless -%}
+
+  {%- unless own contains "|difficulty|" -%}{%- if c.difficulty -%}
+    {%- include checksec-row.html label="Difficulty" text=c.difficulty -%}
+  {%- endif -%}{%- endunless -%}
+
+  {%- comment -%}
+    One row, one fact — but the fact is "the handout", and a handout is a list.
+    The links stack one per line inside the value instead of sharing one with
+    separators between them, so the row grows downward and the column holds.
+  {%- endcomment -%}
+  {%- unless own contains "|files|" -%}{%- if c.attachments -%}
+    {%- comment -%}
+      The newline between the anchors is deliberate, and it is the ONLY
+      separator: `.chk__stack` is a flex column, and a whitespace-only text run
+      between flex items is not rendered, so it costs nothing there — while
+      with the stylesheet gone the two names still fall apart instead of
+      reading as `madcore.ziplibc.so.6`. It survives because `endfor` carries
+      no left dash; one there rstrips the accumulated output every iteration
+      and would eat it.
+    {%- endcomment -%}
+    {%- capture v -%}
+<span class="chk__stack">
+{%- for a in c.attachments %}
+<a href="{{ a.url | escape }}">{{ a.name | default: a.url | escape }}</a>
+{%- endfor %}
+</span>
+    {%- endcapture -%}
+    {%- include checksec-row.html label="Files" html=v -%}
+  {%- endif -%}{%- endunless -%}
+
+  {%- comment -%}
+    A CTFtime TASK id, not the event id — the event id lives in
+    _data/events.yml and is shared by every challenge from that CTF.
+  {%- endcomment -%}
+  {%- unless own contains "|ctftime|" -%}{%- if c.ctftime -%}
+    {%- capture v -%}<a href="https://ctftime.org/task/{{ c.ctftime | escape }}">ctftime.org/task/{{ c.ctftime | escape }}</a>{%- endcapture -%}
+    {%- include checksec-row.html label="CTFtime" html=v -%}
+  {%- endif -%}{%- endunless -%}
+
+  {%- comment -%}
+    The one row a writeup always earns: it exists because the thing got solved.
+    It is this block's green row, because a solve is the good outcome and
+    `solved` is the word that carries it. `with` folds in here rather than
+    taking a row of its own — you solve a challenge WITH people, so the row's
+    single fact is who solved it.
+  {%- endcomment -%}
+  {%- comment -%}
+    Gated, not unconditional. `ctf: {}` is a truthy hash, so an unguarded row
+    here asserted a solve on a post that had claimed nothing — and, because it
+    calls checksec-row directly rather than going through checksec-cell's empty
+    guard, it materialised a whole pane out of an empty key. A solve is a claim
+    about the world; it needs something to have been said first.
+  {%- endcomment -%}
+  {%- if c.event or c.category or c.with -%}
+  {%- unless own contains "|solved|" -%}
+    {%- capture solvers %}{{ site.author.name }}{% if c.with %}, {{ c.with | join: ", " }}{% endif %}{% endcapture -%}
+    {%- include checksec-row.html label="Solved" text=solvers state="good" -%}
+  {%- endunless -%}
+  {%- endif -%}
+{%- endif -%}
+
+{%- comment -%} ---- the post's own rows ------------------------------------ {%- endcomment -%}
+{%- for item in page.checksec -%}
+  {%- comment -%}
+    item[0] is set only for the plain-mapping shape, where Liquid has already
+    unpacked the entry into a [label, value] array. For the sequence shape item
+    is a hash and item[0] is nil, so iterating it yields the same [label, value]
+    pairs — which also means an entry that lost its `-` and merged two labels
+    into one map still renders both rows, in order, instead of dropping one.
+  {%- endcomment -%}
+  {%- comment -%}
+    Unpacked into named variables first: Jekyll's include tag rejects a
+    bracketed lookup in a parameter value outright, with an ArgumentError at
+    build time rather than a silent nil.
+  {%- endcomment -%}
+  {%- if item[0] -%}
+    {%- assign lbl = item[0] -%}
+    {%- assign val = item[1] -%}
+    {%- include checksec-cell.html label=lbl value=val -%}
+  {%- else -%}
+    {%- for pair in item -%}
+      {%- assign lbl = pair[0] -%}
+      {%- assign val = pair[1] -%}
+      {%- include checksec-cell.html label=lbl value=val -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endfor -%}
+
+{%- endcapture -%}
+
+{%- assign n = rows | strip | size -%}
+{%- if n > 0 -%}
+{%- comment -%}
+  No pane, deliberately. A pane's border title is pane_current_path, and the
+  breadcrumb three lines above this already reads ~/posts/2022/madcore — so the
+  frame's only unique contribution was a fourth printing of the slug, which
+  already appears in the breadcrumb, the <h1> and the command below. It is also
+  a frame on the surface whose whole thesis is not having any: this is output,
+  and output in a terminal is not boxed.
+{%- endcomment -%}
+<section class="chk-block">
+  {%- comment -%}
+    The argument is the post's own slug — the same token the breadcrumb and the
+    pane title end with — rather than a front-matter key, because a key whose
+    only job is to name the thing the page is already named after is friction.
+    The ❯ is the author's zsh caret and is decorative; the command text is the
+    content.
+  {%- endcomment -%}
+  <p class="chk__cmd"><span class="chk__caret" aria-hidden="true">❯</span><span class="chk__said">checksec {{ page.title | slugify }}</span></p>
+  <dl class="chk">
+    {{- rows -}}
+  </dl>
+</section>
+{%- endif -%}

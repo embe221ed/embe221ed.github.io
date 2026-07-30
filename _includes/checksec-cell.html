@@ -1,0 +1,51 @@
+{%- comment -%}
+  One row written by hand in front matter, normalised before it reaches
+  _includes/checksec-row.html.
+
+  A value is either a scalar — the common case, and the only one the README
+  leads with —
+
+      - Topic: interdotensional
+
+  or a map, when the row needs a link or wants to claim a state:
+
+      - Repo:
+          text:  interdotensional
+          url:   https://github.com/embe221ed/interdotensional
+      - Status:
+          text:  abandoned
+          state: bad
+
+  The three keys are told apart from a scalar by asking for them: Liquid
+  returns nil for `.url` on a String or an Integer, so a map is a value that
+  answers to at least one of text/url/state. `text` defaults to `url`, which
+  makes a bare `url:` a complete row.
+
+  A label with no value renders NOTHING — no empty row, no dangling colon.
+  That is also the documented way to delete a derived CTF row: claim its label
+  and leave it blank.
+{%- endcomment -%}
+{%- assign lbl = include.label | strip -%}
+{%- assign val = include.value -%}
+{%- if lbl != "" -%}
+  {%- if val.text or val.url or val.state -%}
+    {%- assign t = val.text | default: val.url | strip -%}
+    {%- if t != "" -%}
+      {%- if val.url -%}
+        {%- capture v -%}<a href="{{ val.url | escape }}">{{ t | escape }}</a>{%- endcapture -%}
+        {%- include checksec-row.html label=lbl html=v state=val.state -%}
+      {%- else -%}
+        {%- include checksec-row.html label=lbl text=t state=val.state -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- else -%}
+    {%- comment -%}
+      `strip` is what makes `- Label:` (nil) and `- Label: ""` both vanish;
+      it also flattens a number to its digits without a second branch.
+    {%- endcomment -%}
+    {%- assign t = val | strip -%}
+    {%- if t != "" -%}
+      {%- include checksec-row.html label=lbl text=t -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endif -%}
