@@ -1,24 +1,57 @@
 {%- comment -%}
   tmux status bar. The author's real config puts status on TOP, so it goes on
-  top here. Window numbering mirrors tmux's own: the active window is inverse
-  video. Decorative glyphs only; the window list is real navigation.
+  top here. Decorative glyphs only; the window list is real navigation.
+
+  Window numbers come from `forloop.index` over _data/windows.yml and are never
+  written into the markup — `base-index 1` with `renumber-windows on` means the
+  number is positional, so a literal becomes a lie the moment a window moves.
+
+  The separator is `window-status-separator "#[fg=dim]<U+2758> "`. U+2758 is not
+  in the shipped Maple Mono subset and would render as a tofu box that breaks
+  the cell advance, so main.css draws the separator from a
+  `.tmux__win + .tmux__win::before` pseudo-element instead of the markup
+  emitting a glyph at all. Chosen over a literal `│` because a generated
+  separator never lands in a copied window list, and swapping the near-miss
+  glyph for a 1px rule later stays a CSS-only change.
 {%- endcomment -%}
 <div class="tmux">
-  <span class="tmux__session">[{{ site.author.name }}]</span>
+  {%- comment -%}
+    status-left "#[fg=dim] #S #[fg=pink]❯ " — the session name is dim text and
+    the sigil is the pink caret. No brackets and no fill: green has exactly one
+    job in the whole config and it is the success prompt, not a chip.
+  {%- endcomment -%}
+  <span class="tmux__session">{{ site.author.name }}</span>
+  <span class="tmux__sigil" aria-hidden="true">❯</span>
 
   <nav class="tmux__windows" aria-label="Sections">
     {%- assign p = page.url -%}
-    <a class="tmux__win" href="{{ '/' | relative_url }}"
-       {% if p == '/' %}aria-current="page"{% endif %}>0:home</a>
-    <a class="tmux__win" href="{{ '/categories/' | relative_url }}"
-       {% if p contains '/posts/' or p contains '/categories/' %}aria-current="page"{% endif %}>1:writeups</a>
-    <a class="tmux__win" href="{{ '/tags/' | relative_url }}"
-       {% if p contains '/tags/' %}aria-current="page"{% endif %}>2:tags</a>
-    <a class="tmux__win" href="{{ '/about/' | relative_url }}"
-       {% if p == '/about/' %}aria-current="page"{% endif %}>3:about</a>
+    {%- for w in site.data.windows -%}
+      {%- assign idx = forloop.index -%}
+      {%- assign cur = false -%}
+      {%- if w.exact -%}
+        {%- if p == w.url -%}{%- assign cur = true -%}{%- endif -%}
+      {%- else -%}
+        {%- for path in w.paths -%}
+          {%- if p contains path -%}{%- assign cur = true -%}{%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+    <a class="tmux__win" href="{{ w.url | relative_url }}"
+       {% if cur %}aria-current="page"{% endif %}>{{ idx }}:{{ w.name }}</a>
+    {%- endfor -%}
   </nav>
 
   <div class="tmux__right">
+    {%- comment -%}
+      The real status-right is transient flags only, each drawn just when its
+      format is true: `#{?pane_in_mode,#[fg=pink]▲ ,}`. pane_in_mode on the web
+      is the #copymode checkbox in post.html, which sits inside <main> — after
+      this bar in the document — so main.css reveals the flag with
+      `body:has(#copymode:checked)` and keeps it display:none otherwise,
+      matching a tmux format that evaluates to the empty string.
+      ▲ U+25B2 is present in the shipped font; the nerd-font flags are not.
+    {%- endcomment -%}
+    <span class="tmux__flag tmux__flag--mode" aria-hidden="true">▲</span>
+
     <button type="button" class="themebtn" data-theme-toggle
             aria-label="Toggle light and dark theme">
       <span data-theme-label>theme</span>

@@ -11,11 +11,28 @@ layout: default
   break out into the remaining track. The header block stays at --measure.
 {%- endcomment -%}
 <article class="wrap-wide surface-read">
+
+  {%- comment -%}
+    pane_in_mode, for the web. Visually hidden but focusable, and it has to stay
+    a sibling BEFORE .prose: main.css turns the gutter on with
+    `#copymode:checked ~ .prose`, and reveals the ▲ flag in the status bar with
+    `body:has(#copymode:checked)` because the bar is rendered before <main>.
+    Never display:none — that would drop it out of the tab order and the label
+    would have nothing to operate.
+  {%- endcomment -%}
+  <input class="vh" type="checkbox" id="copymode">
+
  <div class="post__head">
 
   <a class="bridge" href="{{ '/' | relative_url }}">~/posts/{{ page.date | date: "%Y" }}/{{ page.title | slugify }}</a>
 
   <h1 class="post__title">{{ page.title }}</h1>
+
+  {%- comment -%}
+    Prose-only reading time. See _includes/read-time.html for why the old
+    `content | number_of_words` said 36 min about a ten-minute article.
+  {%- endcomment -%}
+  {%- capture readtime %}{% include read-time.html content=content %}{% endcapture -%}
 
   <div class="post__meta">
     <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%Y-%m-%d" }}</time>
@@ -25,15 +42,28 @@ layout: default
     {%- endif %}
     {%- if page.tags.size > 0 %}
     <span>·</span>
+    {%- comment -%}
+      The separator between tags is the template's own newline. It cannot be a
+      space inside an `unless forloop.last` block: `endfor` with a left dash
+      rstrips the accumulated output on every iteration, so that space was
+      swallowed and the three tags rendered as `pwnbinexpgooglectf`.
+    {%- endcomment -%}
     <span>
-      {%- for tag in page.tags -%}
-      <a href="{{ '/tags/' | append: tag | append: '/' | relative_url }}">{{ tag }}</a>{% unless forloop.last %} {% endunless %}
-      {%- endfor -%}
+      {%- for tag in page.tags %}
+      <a href="{{ '/tags/' | append: tag | append: '/' | relative_url }}">{{ tag }}</a>
+      {%- endfor %}
     </span>
     {%- endif %}
     <span>·</span>
-    <span>{{ content | number_of_words | divided_by: 200 | plus: 1 }} min</span>
+    <span>{{ readtime | strip }} min</span>
   </div>
+
+  {%- comment -%}
+    The challenge metadata, in the author's own pwntools log format. Renders
+    nothing at all unless the post carries a `ctf:` block with `event` and
+    `category`, so a non-CTF article never sees it.
+  {%- endcomment -%}
+  {%- include chal-card.html %}
 
   {%- comment -%}
     The contents are chrome, not prose, so they get a pane. The article body
@@ -52,6 +82,14 @@ layout: default
     </details>
   </section>
   {%- endif %}
+
+  {%- comment -%}
+    `prefix [` is the author's own binding for copy mode, so the mnemonic is
+    the real one. It sits last in the head, directly above the code it acts on.
+  {%- endcomment -%}
+  <p class="post__tools">
+    <label class="keyhint" for="copymode"><span class="keyhint__mn" aria-hidden="true">[</span> copy mode</label>
+  </p>
 
  </div>
 

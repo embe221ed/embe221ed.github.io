@@ -1,0 +1,15 @@
+{%- comment -%}
+  One `ls -la` row. Shared by the homepage index, the tag/category archives and
+  /archives/ so the three listings cannot drift apart. Mode bits are the publish
+  state rather than real permissions, so they are decorative.
+{%- endcomment -%}
+<li>
+  <a class="ls__row" href="{{ include.post.url | relative_url }}">
+    <span class="ls__mode" aria-hidden="true">-rw-r--r--</span>
+    <span class="ls__date">{{ include.post.date | date: "%Y-%m-%d" }}</span>
+    <span class="ls__name">
+      {%- if include.post.categories.first %}<span class="ls__cat">{{ include.post.categories.first }}</span>{% endif -%}
+      {{ include.post.title }}
+    </span>
+  </a>
+</li>

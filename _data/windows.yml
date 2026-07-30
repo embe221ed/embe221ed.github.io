@@ -1,0 +1,29 @@
+# The tmux window list, in order.
+#
+# THE INDEX IS DELIBERATELY ABSENT. The real config sets `base-index 1`,
+# `pane-base-index 1` and `renumber-windows on`, which together mean a window's
+# number is a function of its position and nothing else — so the bar renders
+# `forloop.index` and a literal number is never written down anywhere. Reorder
+# these rows and the bar renumbers itself; add a row and you have a window.
+#
+#   name   the window name tmux draws after the colon
+#   url    where the window navigates to
+#   exact  match page.url exactly. Only `/` needs this — as a substring it
+#          would match every path on the site.
+#   paths  substrings of page.url that make this window the current one
+
+- name: home
+  url: /
+  exact: true
+
+- name: writeups
+  url: /categories/
+  paths: ["/posts/", "/categories/", "/archives/"]
+
+- name: tags
+  url: /tags/
+  paths: ["/tags/"]
+
+- name: about
+  url: /about/
+  paths: ["/about/"]

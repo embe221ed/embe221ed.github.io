@@ -1,0 +1,45 @@
+{%- comment -%}
+  Reading time over PROSE ONLY. Emits a bare integer.
+
+  `content | number_of_words` counted the rendered HTML, so 425 lines of
+  decompiled C++, pwntools transcripts and hexdumps — plus every <span> Rouge
+  wrapped around a token — were read at 200 wpm as if they were English. On the
+  madcore post that is 6,838 "words" and a 35-minute claim on a ten-minute
+  article: a 3.5x exaggeration on the one number that decides whether a pasted
+  link gets opened.
+
+  No plugin and no gem, because both code tiers kramdown emits are delimited by
+  the same pair of tags — a fenced block is
+  `<div class="language-cpp …"><…><pre class="highlight"><code>` and an inline
+  span is `<code class="language-plaintext highlighter-rouge">` — so the split
+  string is the OPEN tag `<code` with no bracket, which is the only form that
+  catches both. Splitting on `<code>` matches the 45 fenced blocks and misses
+  all 176 inline spans, which then read as prose. Each piece's prose is whatever
+  follows the matching `</code>`; a `</code>` inside code arrives
+  entity-escaped, so it cannot split early.
+
+  strip_html then drops the surviving tags. Without it `number_of_words` counts
+  `<p>` and `<h3 id="files">` as words in their own right, which is most of the
+  gap between 6,838 and the ~2,000 that are actually sentences.
+
+  Measured on the madcore post: 1,831 words, 10 min, against 1,938 words of
+  prose counted by hand. It reads slightly low because inline code is part of
+  the sentence around it; the number it replaces read 3.5x high.
+
+  `divided_by: 200` is integer division, so this floors and adds one: 1,938
+  would give 10, 1,831 gives 10, and a twenty-word post gives 1 rather than 0.
+
+    content  the rendered post body.
+{%- endcomment -%}
+{%- assign parts = include.content | split: "<code" -%}
+{%- assign words = parts[0] | strip_html | number_of_words -%}
+{%- for part in parts offset: 1 -%}
+  {%- assign after = part | split: "</code>" -%}
+  {%- assign n = after.size | minus: 1 -%}
+  {%- if n > 0 -%}
+    {%- assign prose = after | slice: 1, n | join: " " -%}
+    {%- assign w = prose | strip_html | number_of_words -%}
+    {%- assign words = words | plus: w -%}
+  {%- endif -%}
+{%- endfor -%}
+{{- words | divided_by: 200 | plus: 1 -}}

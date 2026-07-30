@@ -12,16 +12,15 @@ layout: default
 
     <section class="pane">
       <span class="pane__title">{{ site.author.name }}@blog:~</span>
+      {%- comment -%}
+        The working copy is dirty exactly when _data/drafts.yml has rows in it:
+        those are posts written and not yet committed to _posts/. Computed, not
+        asserted — the ✗ appears when there is genuinely unpublished work.
+      {%- endcomment -%}
+      {%- assign dirty = false -%}
+      {%- if site.data.drafts.size > 0 %}{% assign dirty = true %}{% endif -%}
       <h1 class="ps1">
-        <span class="ps1__ctx">
-          <span class="ps1__user">{{ site.author.name }}</span><span class="ps1__at">@</span><span class="ps1__host">blog</span>
-          <span class="ps1__path">~</span>
-          <span class="ps1__branch">⎇ main</span>
-        </span>
-        <span class="ps1__line">
-          <span class="ps1__caret" aria-hidden="true">❯</span>
-          <span class="ps1__said">{{ site.tagline }}</span><span class="cursor" aria-hidden="true"></span>
-        </span>
+        {%- include ps1.html dir="~" dirty=dirty said=site.tagline cursor=true -%}
       </h1>
       <p class="term-note">{{ site.description | strip_newlines | strip }}</p>
     </section>
@@ -33,16 +32,7 @@ layout: default
         <h2 class="term-h">ls -la</h2>
         <ul class="ls">
           {%- for post in site.posts %}
-          <li>
-            <a class="ls__row" href="{{ post.url | relative_url }}">
-              <span class="ls__mode" aria-hidden="true">-rw-r--r--</span>
-              <span class="ls__date">{{ post.date | date: "%Y-%m-%d" }}</span>
-              <span class="ls__name">
-                {%- if post.categories.first %}<span class="ls__cat">{{ post.categories.first }}</span>{% endif -%}
-                {{ post.title }}
-              </span>
-            </a>
-          </li>
+          {%- include ls-row.html post=post %}
           {%- endfor %}
           {%- for d in site.data.drafts %}
           <li>
@@ -56,9 +46,15 @@ layout: default
           </li>
           {%- endfor %}
         </ul>
+        {%- comment -%}
+          /archives/ is an indexed URL on the live site. Without a link from the
+          one surface that lists posts it would be reachable from the sitemap and
+          nowhere else, which is how it got dropped in the first place.
+        {%- endcomment -%}
         <p class="term-note">
           {{ site.posts | size }} published{% if site.data.drafts %}, {{ site.data.drafts | size }} draft{% if site.data.drafts.size != 1 %}s{% endif %}{% endif %}.
           Mode bits are the publish state.
+          <a href="{{ '/archives/' | relative_url }}">ls -R</a>
         </p>
       </section>
 

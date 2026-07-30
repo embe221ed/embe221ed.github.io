@@ -1,0 +1,587 @@
+/* ==========================================================================
+   pwn.css — the four figure types a heap writeup needs and markdown has none
+   of. Loaded after syntax.css; nothing in here touches a Rouge token or a
+   highlighted container, which are syntax.css's, or any page chrome, which is
+   main.css's.
+   ==========================================================================
+
+   Every colour is a var(--id-*) carrying the generated LIGHT value from
+   assets/css/interdot-theme.css as its literal fallback, so a vanished theme
+   file degrades to a readable light palette instead of to `inherit`. The
+   fallbacks were copied from the generated file, not remembered: a fallback
+   that has drifted still parses, so it voids the property it claims to
+   protect without ever failing loudly.
+
+   CONTRAST, measured (WCAG 2.1) on the two grounds these components use —
+   --id-bg-deep #f4e8be/#1d2021 for the framed figures, --id-bg #fbf1c7/#282828
+   for the bare table and for a lifted row:
+
+                    on --id-bg-deep        on --id-bg
+     --id-fg          6.84 / 9.07           7.39 / 8.16
+     --id-fg-strong   8.88 / 9.96           9.59 / 8.96
+     --id-muted       4.64 / 6.55           5.01 / 5.89
+     --id-accent      4.56 / 7.43           4.93 / 6.68
+     --id-accent2     4.54 / 6.36           4.91 / 5.72
+     --id-success     4.58 / 7.47           4.95 / 6.72
+     --id-info        4.64 / 6.60           5.01 / 5.94
+     --id-special     4.55 / 5.98           4.92 / 5.37
+     --id-danger      4.63 / 5.23           5.00 / 4.70
+     --id-dim         2.99 / 4.47           3.24 / 4.02   <- hairlines only
+     --id-faint       2.04 / 2.88           2.21 / 3.13   <- hairlines only
+
+   --id-dim is never ink here. It appears exactly twice, both times as a 1px
+   rule under a table heading, which is the job it has. In particular it is
+   NOT on the box-drawing glyphs of a memory map, where a rule glyph would
+   normally take it: a diagram declares itself role="img", so its lines are
+   graphical objects that WCAG 1.4.11 asks 3:1 of, and 2.99:1 misses by 0.01.
+   Section 4 says so where it happens.
+
+   MAP
+     1  the shared figure surface
+     2  PWN-02  {: .checksec }         the mitigations table
+     3  PWN-05  {: .struct }           memory layouts as markdown tables
+     4  PWN-07  <pre class="diagram">  ASCII memory maps
+     5  PWN-08  {% chunk %}            annotated heap chunks
+   ========================================================================== */
+
+
+/* --------------------------------------------------------------------------
+   1. THE SHARED FIGURE SURFACE
+   These figures are terminal output, so they have to read as the same surface
+   a code block does. Ground, hairline and radius are the values syntax.css
+   gives div.highlighter-rouge, restated rather than shared because neither
+   main.css nor syntax.css can see these components: main.css frames
+   `.prose > pre`, which reaches a top-level <pre class="diagram"> and nothing
+   else, and syntax.css frames what Rouge emits. If the code frame ever
+   changes, these change with it.
+
+   pre.diagram is deliberately NOT in this list. It IS a `.prose > pre`, so
+   main.css already frames it, and restating the frame here would be a second
+   copy of the same four values drifting apart at leisure.
+   -------------------------------------------------------------------------- */
+
+.checksec,
+.chunk__mem {
+  background: var(--id-bg-deep, #f4e8be);
+  border: 1px solid var(--id-border, #d5c4a1);
+  border-radius: 6px;
+  color: var(--id-fg, #654735);
+  font-size: var(--fs-sm, 0.8125rem);
+  line-height: 1.6;
+}
+
+
+/* ==========================================================================
+   2. THE CHECKSEC TABLE                                          [PWN-02]
+   --------------------------------------------------------------------------
+   The opening move of every pwn writeup, and there was no component for it.
+
+   AUTHORING — an ordinary markdown table plus one block IAL. No HTML, no
+   plugin, and Rouge is not involved:
+
+     | mitigation | verdict                   |
+     |------------|---------------------------|
+     | Arch       | amd64-64-little           |
+     | RELRO      | **Full RELRO**{: .on }    |
+     | Stack      | **Canary found**{: .on }  |
+     | NX         | **NX enabled**{: .on }    |
+     | PIE        | **PIE enabled**{: .on }   |
+     | FORTIFY    | **Disabled**{: .off }     |
+     {: .checksec }
+
+   The verdict classes are kramdown SPAN IALs, which work in a table cell and
+   attach to the element in front of them, so `**…**{: .on }` is
+   <strong class="on">. `.on` / `.off` / `.na` are the three roles; anything
+   without one of them renders flat, which is what `Arch` wants. The same
+   classes work on a hand-written <span> and inside a ```checksec fence, so
+   the component does not depend on the authoring form — but note that Rouge
+   4.7.0 has no checksec lexer and none is being added, so a fence renders as
+   plain text and the verdict spans have to be written by hand there. The
+   table is the form the approved specimen used and the form to use.
+
+   WCAG 1.4.1: hue is never the only channel, and this component could not
+   pass on hue alone even if it wanted to — --id-success and --id-danger are
+   4.58:1 and 4.63:1 on this ground, i.e. equally dark, so a colour-blind
+   reader sees two identically-weighted words. The WORD is the signal ("Full
+   RELRO" / "Disabled" / "Canary found" — checksec's own words, unedited), and
+   a shape goes in front of it: ● for a mitigation that holds, ▲ for the one
+   being abused. Both are in the shipped Maple Mono. They are generated with
+   the empty-alt form, so a screen reader gets the word and not a bullet.
+
+   One mitigation renders as the one being abused, in --id-danger — for
+   madcore that is FORTIFY, because the read loop in main() has no bounds
+   check to fortify.
+   -------------------------------------------------------------------------- */
+
+/* OWNERSHIP. main.css already makes every `.prose > table` a block-level
+   scroll container with border-collapse and the small type — it says why, and
+   `display: block` there is what lets a bare markdown table scroll at all
+   without the wrapper kramdown will not emit. None of that is restated here.
+   What follows is only what a checksec block is that a table is not, and
+   every rule that has to beat one of main.css's is qualified with the element
+   name to out-specify it on purpose rather than on load order: `table.checksec
+   td` is (0,1,2) against `.prose td` at (0,1,1).
+
+   width: max-content is the one layout property this adds. main.css puts a
+   prose table on the wide grid track, and a six-row key/value list stretched
+   across it stops reading as terminal output; max-width clamps it back before
+   the shrink-wrap can push the page sideways. */
+.checksec {
+  width: max-content;
+  max-width: 100%;
+  padding: 0.7rem 0.9rem;
+}
+
+/* checksec prints no column headings and the specimen has none. A markdown
+   table cannot omit its header row, so the row is kept for the table's own
+   semantics and for a screen reader, and taken off the screen. Never
+   display:none, which would take it out of the accessibility tree too — the
+   point is that "mitigation" and "verdict" survive there. */
+.checksec thead tr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* checksec prints two tight columns, not a data table: main.css's row padding
+   and its per-cell rule both have to come off, or six mitigations occupy a
+   third of the screen and read as a spreadsheet. */
+table.checksec td,
+table.checksec th,
+.checksec td,
+.checksec th {
+  padding: 0.08rem 0;
+  text-align: left;
+  vertical-align: baseline;
+  border: 0;
+  font-weight: 400;
+}
+
+/* the mitigation name, and checksec's own colon after it */
+.checksec tbody tr > :first-child {
+  padding-inline-end: 1.4ch;
+  color: var(--id-muted, #6b665f);
+  white-space: nowrap;
+}
+.checksec tbody tr > :first-child::after { content: ":" / ""; }
+
+.checksec .on   { color: var(--id-success, #626d2a); font-weight: 400; }
+.checksec .off  { color: var(--id-danger,  #b43e3e); font-weight: 700; }
+.checksec .na   { color: var(--id-muted,   #6b665f); font-weight: 400; }
+
+.checksec .on::before  { content: "● " / ""; }
+.checksec .off::before { content: "▲ " / ""; }
+
+/* If the author reaches for backticks instead of `**`, the verdict arrives as
+   inline code and picks up main.css's inline-code chrome — orange on a tinted
+   ground, with a border. Inside this component a verdict is a word, not a code
+   span, so the chrome comes back off and the verdict colour above wins.
+   `.prose .checksec code` is in the list because the rule being undone is
+   `.prose :not(pre) > code` at (0,1,2): a bare `.checksec code` is (0,1,1) and
+   would lose. Selector lists take the specificity of the selector that
+   matched, so the pair wins inside .prose and still applies outside it. */
+.checksec code,
+.prose .checksec code {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+
+/* ==========================================================================
+   3. MEMORY LAYOUTS AS MARKDOWN TABLES                           [PWN-05]
+   --------------------------------------------------------------------------
+   AUTHORING — a markdown table, one block IAL, and the alignment row doing
+   what it already does:
+
+     | offset | size | field             | type     |
+     |-------:|-----:|-------------------|----------|
+     | 0x00   |    8 | core              | uint64_t |
+     | 0x08   |    8 | size              | uint64_t |
+     | 0x10   |   64 | fileName          | char[64] |
+     | 0x50   |    8 | virtualAddress    | uint64_t |
+     | 0x58   |    8 | memoryProtections | uint64_t |
+     {: .struct }
+
+   COLUMN ORDER IS THE CONTRACT: offset, size, field, type. Nothing in CSS can
+   read a heading, so the roles below are positional — first two columns
+   numeric, third the field name, fourth the type. Reorder the columns and the
+   colours follow the position, not the meaning. The `---:` alignment row is
+   not required (the rules below right-align columns 1 and 2 on their own) but
+   it is worth writing anyway: kramdown turns it into an inline style, which
+   beats any stylesheet, so a table that says what it means keeps meaning it
+   under a future edit of this file.
+
+   No frame and no fill: this one is a table in prose, not terminal output, so
+   it sits on --id-bg with hairlines between the rows. Every colour here is
+   measured on that ground, not on the code ground — --id-special 4.92:1 light
+   / 5.37:1 dark, --id-accent 4.93:1 / 6.68:1, --id-muted 5.01:1 / 5.89:1,
+   --id-fg-strong 9.59:1 / 8.96:1. On the hover fill (--id-bg-deep, the code
+   ground) the same four are 4.55, 4.56, 4.64 and 8.88 — still AA, which is
+   why the fill can be that and not --id-panel (3.84:1, fails).
+
+   THE CAVEAT, kept in view: a table cannot show ADJACENCY. It says a field is
+   at 0x58 and it cannot say that the qword after it is somebody else's chunk
+   header, which is the whole claim a heap overflow makes. For that, section 4
+   — the drawn map — is the component, and this one is its index. Use both.
+   -------------------------------------------------------------------------- */
+
+/* Same ownership boundary as section 2: the scroller, the collapse, the small
+   type and the accent heading are all main.css's `.prose > table` and are not
+   restated. width:max-content is: in a fixed-advance face the columns already
+   align, and stretching the table across the wide grid track is exactly what
+   undoes that — the offsets end up a hand's width from the field they belong
+   to. Shrink-wrapped, the four columns sit against each other and the hex
+   column reads as a ruler. */
+.struct {
+  width: max-content;
+  max-width: 100%;
+  line-height: 1.5;
+}
+
+/* Tighter than main.css's prose rows, and nowrap. A memory layout is a grid
+   of five short values; at 0.5rem of row padding it stops looking like one,
+   and a wrapped `char[64]` breaks the alignment the component exists for. */
+table.struct th,
+table.struct td {
+  padding: 0.16rem 1.1ch;
+  white-space: nowrap;
+}
+
+/* main.css already colours a prose thead --id-accent (leaf: table_header =
+   accent) and says why it is colour alone and never uppercase. The only
+   addition is the rule under the heading: --id-dim rather than --id-border,
+   so the head/body break is visible where a row-to-row break is not. Chrome,
+   which is the one job --id-dim has. */
+table.struct thead th {
+  font-weight: 400;
+  border-block-end-color: var(--id-dim, #928374);
+}
+
+/* offset and size. tabular-nums is belt: Maple Mono is fixed-advance so its
+   digits already are, but a fallback face in the stack might not be. */
+.struct tbody td:nth-child(1),
+.struct tbody td:nth-child(2),
+.struct tfoot td:nth-child(1),
+.struct tfoot td:nth-child(2) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--id-special, #8b5878);
+}
+
+.struct tbody td:nth-child(3) {
+  color: var(--id-fg-strong, #4f3829);
+  font-weight: 700;
+}
+
+.struct tbody td:nth-child(4) {
+  color: var(--id-muted, #6b665f);
+}
+
+.struct tbody tr:hover {
+  background: var(--id-bg-deep, #f4e8be);
+}
+
+/* Only reachable from a hand-written table — markdown has no tfoot — and
+   worth keeping for the sizeof() row, which is a total and not a field. */
+.struct tfoot td,
+.struct tfoot th {
+  border-block-end: 0;
+  border-block-start: 1px solid var(--id-dim, #928374);
+  color: var(--id-muted, #6b665f);
+  font-weight: 400;
+}
+
+
+/* ==========================================================================
+   4. ASCII BOX DIAGRAMS                                          [PWN-07]
+   --------------------------------------------------------------------------
+   AUTHORING — raw HTML in the markdown, at the top level of the post so that
+   main.css's `.prose > pre` frames it and puts it on the wide grid track:
+
+     <pre class="diagram" role="img" aria-label="Heap layout at the moment of
+     the overflow, low addresses first. At 0x5647a04a5620 the buffer returned
+     by malloc(0x1000000), chunk size 0x101. …">
+       <span class="diagram__addr">0x5647a04a5620</span>  <span
+       class="diagram__box">┌───────────────┐</span>
+     …
+     </pre>
+
+   role="img" PLUS a written aria-label ARE THE COMPONENT. Not a nicety, not a
+   lint warning to get to later: a drawn box is a picture made of text, so
+   without them a screen reader reads "box drawings light down and right, box
+   drawings light horizontal, box drawings light horizontal, …" for sixty
+   columns, four times over, and the reader has been handed noise where the
+   figure was. With them the picture is one image with one description, which
+   is the same contract a PNG would have. The label must name every region, in
+   address order, with its size — write the sentence you would say out loud.
+
+   Because a stylesheet cannot fail a build, the rules at the end of this
+   section make the omission LOUD instead: a diagram with no role="img", or no
+   aria-label, or an empty one, draws itself with a dashed --id-danger outline
+   and prints why underneath. It is visible in review, in the browser, on the
+   first look at the page, and it cannot be missed the way a comment can.
+
+   Maple Mono covers 100% of Box Drawing and Block Elements (verified against
+   the shipped woff2), so ─ │ ┌ ┐ └ ┘ ├ ┤ ┬ ┴ ┼ ━ ┃ ░ ▒ ▓ █ and ◆ are all
+   safe. U+25B8 (pwndbg's chain arrowhead) and the nerd-font block at
+   U+F0000+ are NOT — a missing glyph is tofu, and tofu inside a role="img"
+   is silent. The codepoints are written out rather than pasted for that
+   reason.
+
+   Two mechanical requirements. Leading of 1.1: measured, a drawn box only
+   stays joined at or below 1.1, and main.css sets 1.6 on `.prose > pre`, so
+   the box comes apart into dashes without this. And overflow-x on the element
+   itself: a 60-column map does not reflow on a phone, and main.css's frame
+   only reaches a diagram that is a direct child of .prose — one nested in a
+   <figure> would have no scroller at all and would take the page sideways
+   with it.
+   -------------------------------------------------------------------------- */
+
+/* `.prose > pre.diagram` is listed alongside `pre.diagram` on purpose: the
+   two properties below have to beat main.css's `.prose > pre` (same
+   specificity, so it would come down to which file loads last), and a
+   selector list uses the specificity of the selector that actually matched. */
+pre.diagram,
+.prose > pre.diagram {
+  line-height: 1.1;
+  overflow-x: auto;
+  /* The component's premise is that MAPLE MONO covers 100% of Box Drawing,
+     and a bare <pre> does not inherit the site face: the UA stylesheet sets
+     font-family: monospace on it and main.css's `.prose > pre` sets a size
+     but no family, so an unstyled diagram is drawn in whatever the browser
+     calls monospace — a different face, different metrics, and no promise
+     about the glyphs. Named here because this component is the one that
+     depends on it. */
+  font-family: var(--font, "Maple Mono", ui-monospace, monospace);
+}
+
+/* The box itself. --id-muted, not the --id-dim a rule glyph would normally
+   take: this element is role="img", so its lines are "graphical objects
+   required to understand the content" and WCAG 1.4.11 asks 3:1 of them.
+   --id-dim is 2.99:1 on this ground in the light theme and misses by 0.01;
+   --id-muted is 4.64:1 / 6.55:1 and clears even the text threshold. */
+.diagram__box  { color: var(--id-muted, #6b665f); }
+.diagram__addr { color: var(--id-muted, #6b665f); }
+.diagram__sz   { color: var(--id-special, #8b5878); }
+.diagram__hit  { color: var(--id-danger, #b43e3e); font-weight: 700; }
+
+/* THE LOUD PART. Three selectors, one for each way to get it wrong. */
+pre.diagram:not([role="img"]),
+pre.diagram:not([aria-label]),
+pre.diagram[aria-label=""] {
+  outline: 2px dashed var(--id-danger, #b43e3e);
+  outline-offset: 3px;
+}
+
+/* The one piece of generated content on this site with no `/ ""` alt, and
+   deliberately: it is a message, not decoration, and the person who needs to
+   hear it is the author checking the page with a screen reader on. */
+pre.diagram:not([role="img"])::after,
+pre.diagram:not([aria-label])::after,
+pre.diagram[aria-label=""]::after {
+  content: "▲ this diagram has no role=img / aria-label — a screen reader gets sixty columns of box-drawing names instead of the figure";
+  display: block;
+  margin-block-start: 0.8rem;
+  padding-block-start: 0.5rem;
+  border-block-start: 1px solid var(--id-danger, #b43e3e);
+  color: var(--id-danger, #b43e3e);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  white-space: normal;   /* the parent is <pre>; this sentence has to wrap */
+}
+
+
+/* ==========================================================================
+   5. ANNOTATED HEAP CHUNKS                                       [PWN-08]
+   --------------------------------------------------------------------------
+   What a reader needs from a hexdump is knowing WHICH EIGHT BYTES are the
+   size field. That is labelling, not interaction, so every label is already
+   on the row before anything is hovered; hover only adds the sentence about
+   why those eight bytes matter. No JS, no state, nothing to click.
+
+   MARKUP CONTRACT for whatever emits this — a {% chunk %} tag, or raw HTML in
+   the post. Read this before changing either half:
+
+     <div class="chunk">
+       <div class="chunk__mem">
+         <pre class="chunk__rows"><span class="chunk__row" data-f="prev"><span
+     class="chunk__ad">0x…df0</span>   0x000000006f732e31   <span
+     class="chunk__nm">prev_size</span></span><!--
+     --><span class="chunk__row" data-f="size">…</span></pre>
+       </div>
+       <div class="chunk__caps">
+         <p class="chunk__cap" data-for="prev">…</p>   <- row 1
+         <p class="chunk__cap" data-for="size">…</p>   <- row 2
+         <p class="chunk__cap chunk__cap--idle">…</p>  <- LAST, always
+       </div>
+     </div>
+
+   0. Two elements, not one, and for the same reason div.highlight wraps
+      pre.highlight in syntax.css: the frame is the scroller and the <pre>
+      inside it is width:max-content, so a row's fill spans the whole figure
+      instead of stopping at the widest line — and a figure wider than the
+      measure scrolls itself rather than taking the page sideways. One
+      element cannot be both: a max-content box never overflows its own
+      scrollport, so it would never scroll.
+   1. .chunk__row is display:block, so the newline between two rows in the
+      source would render as a blank line. Rows are separated by an HTML
+      comment, exactly as the specimen does it, or by nothing at all.
+   2. .chunk__rows must contain ONLY .chunk__row elements. The pairing below
+      is positional — row N reveals caption N — because CSS cannot join two
+      arbitrary attribute VALUES, only enumerate them, and a positional join
+      needs no vocabulary of field names to be kept in step with the tag.
+      data-f / data-for stay in the markup as documentation and as a hook for
+      anything that wants to check the pairing; nothing here reads them.
+   3. The idle caption is LAST, so it never occupies one of the numbered
+      positions.
+   4. Twelve pairs are enumerated. A glibc chunk figure is two header qwords
+      plus the object; twelve rows is more than the madcore Backtrace needs.
+      A thirteenth row silently gets no caption — add pairs if that day comes.
+
+   TOUCH AND KEYBOARD, honestly: hover is a pointer idiom. On touch there is
+   no hover, and the mitigation is that the labels are on the rows already and
+   the idle caption says what the captions add. The pairing also fires on
+   :focus-visible, so if the tag ever emits tabindex="0" on its rows this
+   becomes keyboard-operable with no CSS change.
+   -------------------------------------------------------------------------- */
+
+/* No margin here on purpose: a {% chunk %} lands as a direct child of .prose,
+   where `.prose > *` already sets the page's block rhythm. Setting one would
+   tie on specificity with that rule and be decided by which stylesheet loaded
+   last, which is not a way to own a margin. */
+.chunk__mem {
+  padding: 0.7rem 0.9rem;
+  overflow-x: auto;   /* a wide chunk scrolls here, never the page */
+}
+
+.chunk__rows {
+  margin: 0;
+  /* `font: inherit` undoes the UA's <pre> font (its own monospace stack at
+     medium), and has to come BEFORE line-height because the shorthand resets
+     it. The two restatements after it are the same defence syntax.css
+     documents: `font` also resets font-variant-ligatures and
+     font-feature-settings, i.e. main.css's no-ligatures and slashed-zero. */
+  font: inherit;
+  font-variant-ligatures: inherit;
+  font-feature-settings: inherit;
+  line-height: 1.6;   /* rows are pointer targets, so give them a row's height */
+  /* so a row's fill spans the whole figure rather than stopping at the widest
+     line, and keeps spanning it while the frame is scrolled */
+  width: max-content;
+  min-width: 100%;
+  white-space: pre;
+}
+
+.chunk__row {
+  display: block;
+  padding-inline-start: 0.7ch;   /* clears the inset marker the hover draws */
+  transition: background-color 90ms linear;
+}
+
+/* A LIFT, not a fill. Every colour in a chunk figure is one of the syntax
+   roles, which sit at 4.5-4.6:1 on --id-bg-deep by construction, so any
+   ground that darkens in the light theme takes them below AA (--id-panel:
+   3.83:1, measured). --id-bg is lighter than --id-bg-deep in light and in
+   dark, so the row's own tokens go UP on hover: worst case 4.91:1 light /
+   4.70:1 dark. */
+.chunk__row:hover,
+.chunk__row:focus-visible {
+  background: var(--id-bg, #fbf1c7);
+  box-shadow: inset 2px 0 0 var(--id-accent2, #a65009);
+  /* No `outline: none` here. The fill and the inset rule are a good pointer
+     affordance and a poor focus indicator to bet WCAG 2.4.7 on, so main.css's
+     :focus-visible ring is left to do its job on top of them. */
+}
+
+/* Same reasoning as the copy-mode gutter and the hexdump offset column:
+   copying a chunk figure has to yield the bytes, not the addresses. */
+.chunk__ad {
+  color: var(--id-muted, #6b665f);
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.chunk__nm { color: var(--id-muted, #6b665f); }
+.chunk__row:hover .chunk__nm,
+.chunk__row:focus-visible .chunk__nm { color: var(--id-accent2, #a65009); }
+
+/* All captions stacked in one grid cell: the block is as tall as the tallest
+   caption from the start, so nothing on the page moves when one appears. */
+.chunk__caps {
+  display: grid;
+  margin-block-start: 0.6rem;
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.chunk__cap {
+  grid-area: 1 / 1;
+  margin: 0;
+  visibility: hidden;
+  color: var(--id-fg, #654735);
+  overflow-wrap: anywhere;   /* the captions name real C++ symbols */
+}
+.chunk__cap::before { content: "▪ " / ""; color: var(--id-accent2, #a65009); }
+.chunk__cap b { color: var(--id-accent2, #a65009); font-weight: 700; }
+.chunk__cap--idle { color: var(--id-muted, #6b665f); }
+
+.chunk:not(:has(.chunk__row:hover, .chunk__row:focus-visible)) .chunk__cap--idle {
+  visibility: visible;
+}
+
+.chunk:has(.chunk__row:nth-child(1):is(:hover, :focus-visible)) .chunk__cap:nth-child(1),
+.chunk:has(.chunk__row:nth-child(2):is(:hover, :focus-visible)) .chunk__cap:nth-child(2),
+.chunk:has(.chunk__row:nth-child(3):is(:hover, :focus-visible)) .chunk__cap:nth-child(3),
+.chunk:has(.chunk__row:nth-child(4):is(:hover, :focus-visible)) .chunk__cap:nth-child(4),
+.chunk:has(.chunk__row:nth-child(5):is(:hover, :focus-visible)) .chunk__cap:nth-child(5),
+.chunk:has(.chunk__row:nth-child(6):is(:hover, :focus-visible)) .chunk__cap:nth-child(6),
+.chunk:has(.chunk__row:nth-child(7):is(:hover, :focus-visible)) .chunk__cap:nth-child(7),
+.chunk:has(.chunk__row:nth-child(8):is(:hover, :focus-visible)) .chunk__cap:nth-child(8),
+.chunk:has(.chunk__row:nth-child(9):is(:hover, :focus-visible)) .chunk__cap:nth-child(9),
+.chunk:has(.chunk__row:nth-child(10):is(:hover, :focus-visible)) .chunk__cap:nth-child(10),
+.chunk:has(.chunk__row:nth-child(11):is(:hover, :focus-visible)) .chunk__cap:nth-child(11),
+.chunk:has(.chunk__row:nth-child(12):is(:hover, :focus-visible)) .chunk__cap:nth-child(12) {
+  visibility: visible;
+}
+
+/* Without :has() nothing is revealed and the idle caption never hides, which
+   is the same page minus one sentence — the labels are on the rows either
+   way. That is the whole graceful-degradation story for this component. */
+
+
+/* --------------------------------------------------------------------------
+   MOTION
+   The row fill is the only animation in this file.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .chunk__row { transition: none; }
+}
+
+
+/* --------------------------------------------------------------------------
+   NARROW
+   Down a step at the phone width, matching what syntax.css and main.css do to
+   code. A drawn map still will not reflow — nothing can make it — but at
+   0.72rem a 60-column map fits a 360px viewport without scrolling.
+   -------------------------------------------------------------------------- */
+@media (max-width: 40rem) {
+  /* The table forms are named `table.checksec` / `table.struct` rather than
+     by class alone because main.css's `.prose > table` sets the font size at
+     (0,1,1): a bare `.checksec` here is (0,1,0) and would lose, silently, in
+     the one place the size actually has to move. A media query changes no
+     specificity. */
+  table.checksec,
+  table.struct,
+  .checksec,
+  .struct,
+  .chunk__mem,
+  pre.diagram,
+  .prose > pre.diagram { font-size: 0.72rem; }
+}

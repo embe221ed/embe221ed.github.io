@@ -6,11 +6,15 @@ layout: default
     <section class="pane">
       <span class="pane__title">{{ site.author.name }}@blog:~/{{ page.title | slugify }}</span>
 
+      {%- comment -%}
+        %c is the last path component, which for this pane is the page slug —
+        the same one .pane__title spells out in full above. Include parameters
+        take no filters, so the slug is assigned first.
+      {%- endcomment -%}
+      {%- assign slug = page.title | slugify -%}
+      {%- capture said %}cat {{ slug }}.md{% endcapture -%}
       <h1 class="ps1">
-        <span class="ps1__line">
-          <span class="ps1__caret" aria-hidden="true">❯</span>
-          <span class="ps1__said">cat {{ page.title | slugify }}.md</span>
-        </span>
+        {%- include ps1.html dir=slug said=said -%}
       </h1>
 
       <div class="prose">

@@ -6,6 +6,15 @@ date:   2022-07-15 05:00:00 +0200
 tags:   pwn binexp googlectf
 toc:    true
 categories: writeup
+
+# Challenge metadata. `event` and `category` are the only required keys; every
+# other one renders nothing when absent, so a writeup never waits on a form.
+# `event` is a key into _data/events.yml, which holds the CTF's name, site and
+# CTFtime id once instead of once per challenge.
+ctf:
+  event:    googlectf-2022
+  category: pwn
+  remote:   madcore.2022.ctfcompetition.com:1337
 ---
 
 ## introduction

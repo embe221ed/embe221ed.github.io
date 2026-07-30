@@ -36,6 +36,9 @@
   --id-danger: #b43e3e;
   --id-pane-active: #a15335;
   --id-pane-border: #8d877d;
+  --id-select-fg: #9c4b08;
+  --id-select-bg: #eee0b7;
+  --id-prompt-dir: #467156;
 
   /* Inert provenance: readable from JS or devtools, consumed by no rule. */
   --id-author-theme: "gruvbox-material-light";
@@ -65,6 +68,9 @@
     --id-danger: #ea6962;
     --id-pane-active: #d4967e;
     --id-pane-border: #8d877d;
+    --id-select-fg: #e78a4e;
+    --id-select-bg: #32302f;
+    --id-prompt-dir: #89b482;
   }
 }
 
@@ -90,6 +96,9 @@
   --id-danger: #b43e3e;
   --id-pane-active: #a15335;
   --id-pane-border: #8d877d;
+  --id-select-fg: #9c4b08;
+  --id-select-bg: #eee0b7;
+  --id-prompt-dir: #467156;
 }
 
 :root[data-theme="dark"] {
@@ -111,4 +120,7 @@
   --id-danger: #ea6962;
   --id-pane-active: #d4967e;
   --id-pane-border: #8d877d;
+  --id-select-fg: #e78a4e;
+  --id-select-bg: #32302f;
+  --id-prompt-dir: #89b482;
 }

@@ -7,7 +7,10 @@
  *
  * Colors come from assets/css/interdot-theme.css (generated). Every var()
  * here carries a literal fallback so the site stays readable if that file
- * is ever missing — CSS fails silently and this is the only defence.
+ * is ever missing — CSS fails silently and this is the only defence. The
+ * fallback is always the LIGHT value copied verbatim from the generated file;
+ * a fallback that has drifted from it still parses, so it voids the property
+ * it claims to protect without ever failing loudly.
  */
 
 /* ============================================================
@@ -84,22 +87,44 @@ body {
   font-size: var(--fs);
   line-height: var(--lh);
   font-variant-ligatures: none;
+  /* Slashed zero, site-wide. Maple Mono ships `zero`, and both of the author's
+   * terminals already switch it on for the whole grid (kitty
+   * features='+calt +zero', ghostty font-feature = calt,zero) — so a global
+   * declaration is the faithful scope, not a scoped one. It is also the only
+   * scope that stays coherent: 0x405000 must not carry a slash inside a <code>
+   * and lose it three words later in the same sentence, or in a heading.
+   * Independent of font-variant-ligatures above — that property governs
+   * liga/clig/dlig/calt and never touches `zero`. */
+  font-feature-settings: "zero" 1;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-a { color: var(--id-info, #446e78); }
+a { color: var(--id-info, #436d77); }
 a:hover { text-decoration-thickness: 2px; }
 
 :focus-visible {
-  outline: 2px solid var(--id-info, #446e78);
+  outline: 2px solid var(--id-info, #436d77);
   outline-offset: 2px;
   border-radius: 2px;
 }
 
+/* Selection is the terminal's own: mode-style and menu-selected-style are both
+ * fg=selected.fg,bg=selected.bg,bold — orange on panel_inset. Never green.
+ * Green has exactly one job in the whole config and it is the success caret.
+ *
+ * Measured: --id-select-bg on --id-bg is 1.16:1 (1.07:1 on --id-bg-deep), so
+ * the fill is all but invisible and the hue change carries the signal on its
+ * own — which is equally true in the author's tmux, where menu-style is
+ * ALREADY bg=panel_inset. mode-style's `bold` is the other half of the signal,
+ * but a highlight pseudo-element may only take non-layout-affecting
+ * properties, so font-weight is silently dropped here and is applied on the
+ * hover/current rows below instead. Colour is left to do it, and it can:
+ * --id-select-fg is 4.67:1 on the fill and 5.41:1 on the bare ground, so a
+ * selection is legible whichever of the two the fill actually lands on. */
 ::selection {
-  background: var(--id-success, #636e2a);
-  color: var(--id-bg, #fbf1c7);
+  background: var(--id-select-bg, #eee0b7);
+  color: var(--id-select-fg, #9c4b08);
 }
 
 .skip {
@@ -127,6 +152,19 @@ a:hover { text-decoration-thickness: 2px; }
 /* ============================================================
    TMUX STATUS BAR — top, matching the author's real config
    ============================================================ */
+/* `status-style "bg=default,fg=dim"`: no fill and no divider. Both are gone —
+ * the band is the page ground, exactly as the terminal's is.
+ *
+ * The web has to pay for that transparency, though: tmux gets a reserved
+ * terminal row that nothing can scroll under, and a sticky element does not.
+ * The compensation is a scrim rather than a fill — the ground colour is
+ * painted for the top 58% of the row and fades out from there, so prose
+ * passing beneath is masked with no hard edge anywhere. The fade continues
+ * past the row as a box-shadow in the ground colour: the same job the
+ * specimen's ::after does, but ::after cannot be used here because this
+ * element is a horizontal scroller (overflow-x below) and would clip a
+ * pseudo-element placed under it, whereas an element's own box-shadow is
+ * never clipped by its own overflow. */
 .tmux {
   position: sticky;
   top: 0;
@@ -135,8 +173,8 @@ a:hover { text-decoration-thickness: 2px; }
   align-items: stretch;
   gap: 0;
   height: var(--bar-h);
-  background: var(--id-bg-deep, #f4e8be);
-  border-bottom: 1px solid var(--id-dim, #928374);
+  background: linear-gradient(to bottom, var(--id-bg, #fbf1c7) 58%, transparent);
+  box-shadow: 0 0.35rem 0.45rem var(--id-bg, #fbf1c7);
   font-size: var(--fs-sm);
   line-height: var(--bar-h);
   overflow-x: auto;
@@ -144,12 +182,20 @@ a:hover { text-decoration-thickness: 2px; }
 }
 .tmux::-webkit-scrollbar { display: none; }
 
+/* FID-04 — `status-left "#[fg=dim] #S #[fg=pink]❯ "`. A dim session name and a
+ * pink sigil on the bare band: no brackets, no fill. The name holds at
+ * --id-muted rather than the literal `fg=dim` for the same reason the window
+ * names do — 3.24:1 is below AA and this is the only thing identifying the
+ * session. */
 .tmux__session {
-  background: var(--id-success, #636e2a);
-  color: var(--id-bg, #fbf1c7);
-  font-weight: 700;
-  padding-inline: 0.8ch;
+  color: var(--id-muted, #6b665f);
+  padding-inline-start: 0.8ch;
   white-space: nowrap;
+}
+.tmux__sigil {
+  color: var(--id-pane-active, #a15335);
+  font-weight: 700;
+  padding-inline: 0.8ch 0.4ch;
 }
 .tmux__windows {
   display: flex;
@@ -157,6 +203,10 @@ a:hover { text-decoration-thickness: 2px; }
   flex: 1;
   min-width: 0;
 }
+/* Inactive windows should be `fg=dim` to make room for the active one, and they
+ * are not: --id-dim is 3.24:1 on the ground here and these are the site's only
+ * navigation links, so they hold at --id-muted (5.01:1). This is the one place
+ * in the bar where fidelity would cost AA, and AA wins. */
 .tmux__win {
   padding-inline: 0.9ch;
   color: var(--id-muted, #6b665f);
@@ -164,9 +214,26 @@ a:hover { text-decoration-thickness: 2px; }
   white-space: nowrap;
 }
 .tmux__win:hover { color: var(--id-fg-strong, #4f3829); }
+
+/* FID-05 — `window-status-separator "#[fg=dim]<U+2758> "`. U+2758 is not in the
+ * shipped Maple Mono subset and would render as a tofu box that breaks the cell
+ * advance, so the separator is drawn rather than emitted: generated content
+ * never lands in a copied window list, and swapping it for a 1px rule later
+ * stays a CSS-only change. pointer-events is off because the pseudo-element
+ * sits inside the <a> and would otherwise enlarge its click target. */
+.tmux__win + .tmux__win::before {
+  content: "\2502 " / "";
+  color: var(--id-dim, #928374);
+  pointer-events: none;
+}
+
+/* `window-status-current-style "#{?window_zoomed_flag,fg=yellow,fg=pink},bold"`
+ * — coloured bold text and nothing else. No inverse video, no fill: the fill
+ * was invented, and it was painted in a blue that tools.tmux.colors does not
+ * even define. Pink at 4.87:1, and the weight is free in a fixed-advance face,
+ * so nothing in the bar reflows when the current window changes. */
 .tmux__win[aria-current] {
-  background: var(--id-info, #446e78);
-  color: var(--id-bg, #fbf1c7);
+  color: var(--id-pane-active, #a15335);
   font-weight: 700;
 }
 .tmux__right {
@@ -178,13 +245,27 @@ a:hover { text-decoration-thickness: 2px; }
   white-space: nowrap;
 }
 
+/* CODE-01 — `#{?pane_in_mode,#[fg=pink]▲ ,}`. A tmux format that is false
+ * renders the empty string, so the flag is absent rather than dimmed. The
+ * checkbox lives inside <main>, after this bar, so :has on the body is what
+ * reaches backwards to it. ▲ U+25B2 is in the shipped font. */
+.tmux__flag { display: none; }
+.tmux__flag--mode { color: var(--id-pane-active, #a15335); padding-inline-end: 0.6ch; }
+body:has(#copymode:checked) .tmux__flag--mode { display: inline; }
+
+/* The float tier: `popup-border-lines "padded"` under `ui.border: none` draws no
+ * line at all, only padding where the border would be. So no border and no
+ * radius here — this control is chrome floating on the bar, not a widget. The
+ * padding is what remains of the frame; :focus-visible still rings it. */
 .themebtn {
   font: inherit;
+  /* The `font` shorthand resets font-feature-settings to normal, so a control
+   * that inherits its font would silently lose the slashed zero set on body. */
+  font-feature-settings: inherit;
   font-size: var(--fs-sm);
   cursor: pointer;
   background: none;
-  border: 1px solid var(--id-dim, #928374);
-  border-radius: 3px;
+  border: 0;
   color: var(--id-fg, #654735);
   padding: 0 0.7ch;
   line-height: 1.4;
@@ -197,10 +278,15 @@ a:hover { text-decoration-thickness: 2px; }
 /* ============================================================
    PANE — a tmux split.
    Mirrors the author's real config: single-line borders, title drawn ON the
-   top border (pane-border-status top), rounded corners, and exactly one
-   active pane whose border and title take the accent colour.
+   top border (pane-border-status top), and exactly one active pane whose
+   border and title take the accent colour.
    Borders are CSS, never box-drawing characters — they stay crisp at any
    zoom, reflow on mobile, and never end up in a text selection.
+
+   Three border tiers exist in the config and they are not interchangeable:
+     pane-border-lines  "single"   square, dim      — this component
+     menu-border-lines  "rounded"  6px, pink        — .menu, below
+     popup-border-lines "padded"   no line at all   — .popup / .themebtn
    ============================================================ */
 .panes {
   display: grid;
@@ -218,7 +304,10 @@ a:hover { text-decoration-thickness: 2px; }
 .pane {
   position: relative;
   border: 1px solid var(--id-pane-border, #8d877d);
-  border-radius: 4px;
+  /* `pane-border-lines "single"` is emitted unconditionally: ─ and │ have no
+   * rounded variant, so a pane corner is square. Rounding belongs to the menu
+   * tier alone, and it was borrowing this one. */
+  border-radius: 0;
   padding: var(--s5) var(--s4) var(--s4);
   min-width: 0;
 }
@@ -240,16 +329,53 @@ a:hover { text-decoration-thickness: 2px; }
 }
 
 /* tmux always has exactly one active pane. The first is active until the
-   reader's pointer or keyboard focus moves to another one. */
-.panes:not(:has(.pane:hover, .pane:focus-within)) > .pane:first-child,
+   reader's pointer or keyboard focus moves to another one.
+
+   `:not(.panes .panes)` is what keeps that promise: home.html nests a
+   .panes--split inside .panes, and an unscoped rule matched the first child of
+   BOTH containers — two pink panes at rest, in a component whose whole claim is
+   that there is exactly one. Only the outermost container may nominate a
+   resting active pane. The accepted trade: a pane that is first inside a split
+   can never be the resting one, so on the homepage `~/writeups` stays dim until
+   it is hovered or focused. Hover and focus themselves are unscoped, since
+   those really are one-at-a-time. */
+.panes:not(.panes .panes):not(:has(.pane:hover, .pane:focus-within)) > .pane:first-child,
 .pane:hover,
 .pane:focus-within {
   border-color: var(--id-pane-active, #a15335);
 }
-.panes:not(:has(.pane:hover, .pane:focus-within)) > .pane:first-child > .pane__title,
+.panes:not(.panes .panes):not(:has(.pane:hover, .pane:focus-within)) > .pane:first-child > .pane__title,
 .pane:hover > .pane__title,
 .pane:focus-within > .pane__title {
   color: var(--id-pane-active, #a15335);
+}
+
+/* ---- the other two tiers ----
+ * No markup emits these yet. They are written here so the tier stays a property
+ * of the config rather than of whichever component is built first: when the
+ * choose-tree / actions overlay lands it inherits `rounded + pink`, and it is
+ * the ONLY thing on the site allowed to be round.
+ *   menu-border-lines "rounded", menu-border-style fg=pink, menu-style
+ *   bg=panel_inset — and since the menu ground IS panel_inset, which is the same
+ *   colour menu-selected-style fills with, the selected row cannot be marked by
+ *   a fill at all. Hue and weight do all of it, exactly as in the terminal. */
+.menu {
+  background: var(--id-select-bg, #eee0b7);
+  border: 1px solid var(--id-pane-active, #a15335);
+  border-radius: 6px;
+  padding-block: var(--s2);
+}
+.menu__row--on {
+  color: var(--id-select-fg, #9c4b08);
+  font-weight: 700;
+}
+/* `popup-border-lines "padded"` with `ui.border: none` draws no line whatsoever:
+ * the padding is the frame. A filled box, square, and nothing else. */
+.popup {
+  background: var(--id-bg-deep, #f4e8be);
+  border: 0;
+  border-radius: 0;
+  padding: var(--s4);
 }
 
 /* ============================================================
@@ -265,17 +391,28 @@ a:hover { text-decoration-thickness: 2px; }
   line-height: 1.6;
 }
 .ps1__ctx { display: block; }
-.ps1__user { color: var(--id-success, #636e2a); font-weight: 700; }
-.ps1__at { color: var(--id-muted, #6b665f); }
-.ps1__host { color: var(--id-warning, #935c07); }
-.ps1__path { color: var(--id-info, #446e78); }
-.ps1__branch { color: var(--id-special, #8b5878); }
+/* FID-06/07/08 — line 1 is `$(virtualenv_prompt_info)%c $(git_prompt_info)`.
+ * `.ps1__user/__at/__host/__path` are gone: user@host was never on this prompt,
+ * it is pane-border-format, which .pane__title already draws in the same pane.
+ *
+ * %c is rendered in cyan AND BOLD (`%{$cyan%}%B%c`), where tools.zsh.colors
+ * aliases cyan to $aqua$ — a hue no leaf role carries, so interdotensional now
+ * emits it as --id-prompt-dir (4.93:1 light / 6.28:1 dark). */
+.ps1__dir { color: var(--id-prompt-dir, #467156); font-weight: 700; }
+/* `git:(` and `)` are ZSH_THEME_GIT_PROMPT_PREFIX/CLEAN's `$blue$`, which
+ * tools.zsh.colors aliases to $grey1$ — structure, not a link colour. */
+.ps1__git { color: var(--id-dim, #928374); }
+/* The branch is `$magenta$` = $pink$: the same terracotta as the tmux accent,
+ * never purple. */
+.ps1__branch { color: var(--id-pane-active, #a15335); }
+/* ZSH_THEME_GIT_PROMPT_DIRTY's `%{$yellow%}%1{✗%}`. */
+.ps1__dirty { color: var(--id-accent, #925c07); }
 .ps1__line {
   display: flex;
   align-items: baseline;
   gap: 1ch;
 }
-.ps1__caret { color: var(--id-success, #636e2a); font-weight: 700; }
+.ps1__caret { color: var(--id-success, #626d2a); font-weight: 700; }
 .ps1__said { color: var(--id-fg-strong, #4f3829); }
 
 /* Exactly one blinking cursor on the whole site, and it lives here. */
@@ -284,7 +421,7 @@ a:hover { text-decoration-thickness: 2px; }
   width: 1ch;
   height: 1.15em;
   translate: 0 0.18em;
-  background: var(--id-success, #636e2a);
+  background: var(--id-success, #626d2a);
   animation: blink 1.06s steps(1) infinite;
 }
 @keyframes blink {
@@ -304,15 +441,18 @@ a:hover { text-decoration-thickness: 2px; }
 }
 .term-h::before {
   content: "❯ ";
-  color: var(--id-success, #636e2a);
+  color: var(--id-success, #626d2a);
 }
 
-/* ---- post index as `ls -la` output ---- */
+/* ---- post index as `ls -la` output ----
+ * No `font-variant-numeric: tabular-nums` anywhere on this site: Maple Mono has
+ * no `tnum` table, so the declaration resolved to nothing and implied a
+ * safeguard that was not there. Every glyph in a fixed-advance face is already
+ * tabular — the dates in these rows line up because the font is mono. */
 .ls {
   list-style: none;
   margin: 0;
   padding: 0;
-  font-variant-numeric: tabular-nums;
 }
 .ls__row {
   display: grid;
@@ -324,10 +464,16 @@ a:hover { text-decoration-thickness: 2px; }
   text-decoration: none;
   color: inherit;
 }
+/* The current row is `mode-style` / `menu-selected-style`:
+ * fg=selected.fg,bg=selected.bg,bold. The fill is 1.16:1 against the ground and
+ * cannot be seen on its own, so the weight is not decoration here — it is the
+ * second channel the config asks for. Free of reflow: the face is
+ * fixed-advance, so bolding a row cannot move the `auto` mode column. */
 a.ls__row:hover,
 a.ls__row:focus-visible {
-  background: var(--id-success, #636e2a);
-  color: var(--id-bg, #fbf1c7);
+  background: var(--id-select-bg, #eee0b7);
+  color: var(--id-select-fg, #9c4b08);
+  font-weight: 700;
 }
 a.ls__row:hover .ls__mode,
 a.ls__row:hover .ls__date,
@@ -346,7 +492,7 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 }
 .ls__name { min-width: 0; }
 .ls__cat {
-  color: var(--id-accent2, #a75008);
+  color: var(--id-accent2, #a65009);
   margin-right: 1ch;
 }
 .ls__row--draft { color: var(--id-muted, #6b665f); cursor: default; }
@@ -373,6 +519,7 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
   width: 100%;
   text-align: left;
   font: inherit;
+  font-feature-settings: inherit;   /* the shorthand above resets it */
   background: none;
   border: 0;
   border-radius: 2px;
@@ -380,19 +527,27 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
   color: var(--id-fg, #654735);
   cursor: pointer;
 }
+/* menu-selected-style again — this list is a menu, so it gets the same pair. */
 .picker__row:hover {
-  background: var(--id-success, #636e2a);
-  color: var(--id-bg, #fbf1c7);
+  background: var(--id-select-bg, #eee0b7);
+  color: var(--id-select-fg, #9c4b08);
+  font-weight: 700;
 }
 .picker__row[disabled] {
   color: var(--id-dim, #928374);
   cursor: not-allowed;
 }
-.picker__row[disabled]:hover { background: none; color: var(--id-dim, #928374); }
+/* A row you cannot select never takes the selected style — including the weight,
+ * which the hover rule above would otherwise leave switched on. */
+.picker__row[disabled]:hover {
+  background: none;
+  color: var(--id-dim, #928374);
+  font-weight: 400;
+}
 
 /* The `*` marks the author's own active theme, exactly like `interdot list`.
  * Driven purely off :root so it can never disagree with the stylesheet. */
-.picker__star { width: 1ch; color: var(--id-accent, #935c07); font-weight: 700; }
+.picker__star { width: 1ch; color: var(--id-accent, #925c07); font-weight: 700; }
 .picker__row[data-theme-option="gruvbox-material-light"] .picker__star::before { content: "*"; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) .picker__row[data-theme-option="gruvbox-material-light"] .picker__star::before { content: ""; }
@@ -421,7 +576,7 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
   color: var(--id-muted, #6b665f);
   text-decoration: none;
 }
-.bridge:hover { color: var(--id-info, #446e78); text-decoration: underline; }
+.bridge:hover { color: var(--id-info, #436d77); text-decoration: underline; }
 
 .post__title {
   margin: 0;
@@ -440,7 +595,7 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
   flex-wrap: wrap;
   gap: 0 1.5ch;
 }
-.post__meta a { color: var(--id-accent2, #a75008); }
+.post__meta a { color: var(--id-accent2, #a65009); }
 
 /* ---- prose ----
  * A named-track grid, so code can break out wider than the reading measure
@@ -487,7 +642,7 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 .prose h4 {
   margin-block: var(--s5) var(--s2);
   font-size: var(--fs);
-  color: var(--id-accent2, #a75008);
+  color: var(--id-accent2, #a65009);
 }
 .prose h5,
 .prose h6 {
@@ -527,7 +682,7 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 }
 .prose :is(h2, h3, h4):hover .anchor,
 .prose .anchor:focus-visible { opacity: 1; }
-.prose .anchor:hover .octicon-link::before { color: var(--id-info, #446e78); }
+.prose .anchor:hover .octicon-link::before { color: var(--id-info, #436d77); }
 @media (prefers-reduced-motion: reduce) {
   .prose .anchor { transition: none; }
 }
@@ -539,7 +694,7 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 .prose blockquote {
   margin-inline: 0;
   padding: var(--s2) 0 var(--s2) 2ch;
-  border-left: 2px solid var(--id-accent, #935c07);
+  border-left: 2px solid var(--id-accent, #925c07);
   color: var(--id-muted, #6b665f);
 }
 .prose blockquote > :last-child { margin-block-end: 0; }
@@ -556,13 +711,34 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
   margin-block: var(--s6);
 }
 
-/* inline code */
+/* inline code
+ * leaf: `inline_code_fg = accent2`, `inline_code_bg = panel`. The foreground is
+ * taken; the ground is not. accent2 on --id-panel measures 3.83:1 in light,
+ * which fails AA outright, and on the site's existing --id-bg-deep it is 4.54:1
+ * (6.36:1 dark). Keeping bg-deep is therefore both the readable choice and the
+ * quieter one: this post has 176 inline spans, up to three in a single sentence,
+ * and orange on the louder panel tint turns running prose into a warning label.
+ * Orange on the ground it already had is as much colour as 176 instances can
+ * carry.
+ *
+ * `user-select: all` is `word-separators " "` ported: space is the author's ONLY
+ * word boundary, so in his terminal one grab takes `Corefile::ParseNtFile()` or
+ * a whole /usr/lib path. Every browser instead breaks on . / : ( and hands back
+ * `Corefile`. Scoped deliberately to inline code and never to a block — a click
+ * now selects the entire token, which is wrong for anyone trying to place a
+ * caret inside a long fence, and a block needs partial selection to be useful.
+ * overflow-wrap is the other half: a token that layout cannot break either
+ * would push the reading measure sideways. */
 .prose :not(pre) > code {
   font-size: 0.9em;
+  color: var(--id-accent2, #a65009);
   background: var(--id-bg-deep, #f4e8be);
   border: 1px solid var(--id-border, #d5c4a1);
   border-radius: 3px;
   padding: 0.06em 0.36em;
+  overflow-wrap: anywhere;
+  -webkit-user-select: all;
+  user-select: all;
 }
 
 /* ---- tables ----
@@ -575,7 +751,6 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
   overflow-x: auto;
   border-collapse: collapse;
   font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
 }
 .prose th,
 .prose td {
@@ -583,12 +758,15 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
   padding: var(--s2) var(--s3);
   border-bottom: 1px solid var(--id-border, #d5c4a1);
 }
+/* leaf: `table_header = accent`. Colour is the whole treatment. Uppercase plus
+ * 0.05em plus a smaller size did the one thing a monospace design cannot afford
+ * — it took the header off the character grid, so OFFSET's six glyphs landed
+ * nowhere near the six of 0x0000 in the column beneath. The header now inherits
+ * the table's size and sits character-for-character above its data. Accent is
+ * 4.93:1 on the ground; the fill it used to carry would only have dropped that
+ * to 4.56:1 while adding a second signal the design system does not define. */
 .prose thead th {
-  background: var(--id-bg-deep, #f4e8be);
-  color: var(--id-muted, #6b665f);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  color: var(--id-accent, #925c07);
 }
 .prose tbody tr:last-child td { border-bottom: 0; }
 
@@ -611,7 +789,7 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 .toc > summary::-webkit-details-marker { display: none; }
 .toc > summary::before {
   content: "❯";
-  color: var(--id-success, #636e2a);
+  color: var(--id-success, #626d2a);
   rotate: 90deg;
   transition: rotate 120ms ease;
 }
@@ -645,9 +823,12 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 .toc > nav > ul > li > a::before { content: "##" / ""; }
 .toc > nav > ul > li > ul > li > a::before { content: "###" / ""; }
 .toc > nav > ul > li > ul > li > ul > li > a::before { content: "####" / ""; }
+/* Same selected pair. The `####` prefixes and the de-emphasised h4 entries below
+ * both inherit it, so a hovered entry is one colour top to bottom. */
 .toc a:hover {
-  color: var(--id-bg, #fbf1c7);
-  background: var(--id-success, #636e2a);
+  color: var(--id-select-fg, #9c4b08);
+  background: var(--id-select-bg, #eee0b7);
+  font-weight: 700;
   border-radius: 2px;
 }
 .toc a:hover::before { color: inherit; }
@@ -666,12 +847,47 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 /* Code takes the wide track: decompiled C++ signatures need the room and
  * paragraphs do not. kramdown wraps a fenced block in
  * <div class="language-x highlighter-rouge"><div class="highlight"><pre>. */
-.prose > .highlighter-rouge { grid-column: text-start / wide-end; }
+.prose > .highlighter-rouge {
+  grid-column: text-start / wide-end;
 
-/* syntax.css owns every HIGHLIGHTED container (div.highlighter-rouge /
- * div.highlight / pre.highlight). Do not restyle those here — the selectors
- * tie on specificity and syntax.css loads last, so a rule here would be
- * silently half-applied.
+  /* 45 highlighted blocks on a page that is 25,641px tall. Skipping the layout
+   * and paint of the off-screen ones is the only measure here that costs no
+   * markup, and this wrapper is the exact unit: one rule reaches all 45 and
+   * nothing else on the page.
+   *
+   * Deliberately NOT applied to prose, headings or inline code. That is the
+   * whole mitigation for the caveat: an engine that skips a
+   * content-visibility subtree for in-page find would hide only fenced code,
+   * while every paragraph, all 36 headings and all 176 inline spans — the text
+   * a reader actually searches for — stay live. Chrome and Edge do match
+   * inside these subtrees (they are searchable, and a hit forces the block to
+   * render), Firefox and Safari support the property, and any engine that does
+   * not simply ignores the declaration. Accepted residual risk: Ctrl+F for a
+   * string that exists ONLY inside a fence may come up empty in an engine that
+   * skips them. A heading or anchor target can never be inside one, so no link
+   * into the page can land in skipped content.
+   *
+   * The estimate is measured, not guessed: 466 code lines across 45 blocks is
+   * 10.4 lines each, and at --fs-sm with 1.6 leading plus the block's padding
+   * that is ~15rem. `auto` means the browser replaces the estimate with the
+   * real height once a block has been rendered once, so the scrollbar settles
+   * rather than jumping around as the reader scrolls a 25,000px page. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 15rem;
+}
+/* Print has no viewport to be off-screen of, and a skipped block in a PDF is a
+ * blank hole. Belt and braces — engines have shipped bugs here. */
+@media print {
+  .prose > .highlighter-rouge { content-visibility: visible; }
+}
+
+/* syntax.css owns the LOOK of every highlighted container (div.highlighter-rouge
+ * / div.highlight / pre.highlight): colour, ground, frame. Do not restyle those
+ * here — the selectors tie on specificity and syntax.css loads last, so a rule
+ * here would be silently half-applied. The two exceptions above are placement,
+ * not appearance — where the block sits in the .prose grid, and whether it is
+ * rendered at all — and syntax.css declares neither. If it ever starts to, it
+ * wins, and the rule above stops working with no warning.
  *
  * This is only for the case syntax.css cannot reach: a fence with NO language
  * tag bypasses Rouge entirely and kramdown emits a bare <pre><code> with no
@@ -715,7 +931,7 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
   gap: 0 2ch;
 }
 .foot a { color: var(--id-muted, #6b665f); }
-.foot a:hover { color: var(--id-info, #446e78); }
+.foot a:hover { color: var(--id-info, #436d77); }
 
 /* ============================================================
    CHOOSER — /tags/ and /categories/ index pages.
@@ -740,13 +956,17 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 }
 .chooser__row::before {
   content: "";
-  color: var(--id-success, #636e2a);
+  color: var(--id-success, #626d2a);
   font-weight: 700;
 }
+/* choose-tree's current row is menu-selected-style, same as everything else the
+ * reader moves a cursor through. The ❯ appearing in the gutter is the third
+ * channel, since hue plus weight on a fill this quiet is still hue plus weight. */
 .chooser__row:hover,
 .chooser__row:focus-visible {
-  background: var(--id-success, #636e2a);
-  color: var(--id-bg, #fbf1c7);
+  background: var(--id-select-bg, #eee0b7);
+  color: var(--id-select-fg, #9c4b08);
+  font-weight: 700;
 }
 .chooser__row:hover::before,
 .chooser__row:focus-visible::before {
@@ -766,7 +986,6 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 .chooser__count {
   color: var(--id-muted, #6b665f);
   font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
 }
 
 /* ============================================================
@@ -777,4 +996,93 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
   font-size: var(--fs-lg);
   color: var(--id-fg-strong, #4f3829);
 }
-.archive__title code { color: var(--id-accent2, #a75008); }
+.archive__title code { color: var(--id-accent2, #a65009); }
+
+/* ============================================================
+   UTILITIES AND LATE COMPONENTS
+   Added during integration: these classes are emitted by markup written
+   alongside the rest of this file, so they land here rather than being
+   threaded into sections that were already settled.
+   ============================================================ */
+
+/* Visually hidden but still focusable and still operable. Never display:none —
+ * that drops the element out of the tab order, and #copymode is a real control
+ * that its <label> has to be able to reach. */
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* CODE-01 — the copy-mode control, carrying the author's own `prefix [`
+ * mnemonic. Styled as a key hint rather than a button because that is what it
+ * is: the same affordance the status line advertises, not a widget. */
+.post__tools {
+  display: flex;
+  gap: var(--s3);
+  align-items: baseline;
+  margin-block-start: var(--s4);
+}
+.keyhint {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.8ch;
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--id-muted, #6b665f);
+  padding: 0 0.6ch;
+}
+.keyhint:hover { color: var(--id-fg-strong, #4f3829); }
+.keyhint__mn { color: var(--id-pane-active, #a15335); font-weight: 700; }
+/* The control is off-screen, so its focus ring has to be drawn on the label. */
+#copymode:focus-visible + .post__tools .keyhint,
+.post__tools:has(:focus-visible) .keyhint {
+  outline: 2px solid var(--id-info, #436d77);
+  outline-offset: 2px;
+}
+body:has(#copymode:checked) .keyhint { color: var(--id-pane-active, #a15335); }
+
+/* CTF-01 — the challenge card, in pwntools' own log format. `_msgtype_prefixes`
+ * is `[*]` info, `[+]` success, `[-]` failure, `[!]` warning, `[x]` status;
+ * the bracket is aria-hidden in the markup so the ROW LABEL carries the
+ * meaning and the hue is the redundant channel, not the only one. */
+.chal-pane { margin-block-start: var(--s5); }
+.chal { display: flex; flex-direction: column; gap: var(--s1); font-size: var(--fs-sm); }
+.chal__row {
+  display: grid;
+  grid-template-columns: 12.5ch minmax(0, 1fr);
+  gap: 0 1ch;
+  align-items: baseline;
+}
+.chal__row dt { color: var(--id-muted, #6b665f); }
+.chal__row dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.chal__p { font-weight: 700; }
+.chal__row--info .chal__p    { color: var(--id-info, #436d77); }
+.chal__row--success .chal__p { color: var(--id-success, #626d2a); }
+.chal__row--danger .chal__p  { color: var(--id-danger, #b43e3e); }
+.chal__row--warning .chal__p { color: var(--id-warning, #925c07); }
+.chal__row--special .chal__p { color: var(--id-special, #8b5878); }
+.chal__sep { color: var(--id-dim, #928374); }
+
+/* SHIP-02 — the /archives/ year heading, in the `ls -R` shape: a directory
+ * line, then its contents. */
+.arch__year {
+  margin-block: var(--s6) var(--s2);
+  font-size: var(--fs-md);
+  font-weight: 400;
+  color: var(--id-muted, #6b665f);
+}
+.arch__year:first-of-type { margin-block-start: var(--s4); }
+
+/* CODE-05 — `{% highlight %}` is the only way to pass mark_lines, and it emits
+ * <figure class="highlight"> with no .highlighter-rouge wrapper, so the two
+ * rules that place a code block have to name it too or a marked block sits at
+ * the reading measure instead of the wide track. */
+.prose > figure.highlight { grid-column: text-start / wide-end; margin: 0; }
+.prose figure.highlight { font-size: var(--fs-sm); line-height: 1.6; }

@@ -3,10 +3,15 @@
    ==========================================================================
 
    Interdotensional "leaf" role vocabulary. Every colour in this file is a
-   var(--id-*) reference; there is not a single literal hex value here, and
-   there are no per-theme blocks and no prefers-color-scheme queries. The
-   --id-* custom properties already flip between gruvbox-material light and
-   dark on their own, so this one stylesheet serves both themes.
+   var(--id-*) reference carrying the generated LIGHT value as its literal
+   fallback, so a vanished interdot-theme.css degrades to a readable light
+   palette rather than to `inherit`. Those fallbacks were generated FROM
+   interdot-theme.css rather than typed, for the reason main.css states at the
+   top of itself: a fallback that has drifted from the generated value still
+   parses, so it voids the property it claims to protect without ever failing
+   loudly. There are no per-theme blocks and no prefers-color-scheme queries
+   here — the --id-* properties already flip between gruvbox-material light
+   and dark on their own, so this one stylesheet serves both themes.
 
    The token classes below were not guessed. They were extracted by lexing
    the 45 fenced blocks of _posts/2022-07-15-Google-Capture-The-Flag-2022-
@@ -20,8 +25,20 @@
    every role used for a code token clears 4.5:1 in both. Worst case is
    --id-muted at 4.64:1 light / 6.55:1 dark. --id-dim (2.99:1 light) and
    --id-faint (2.04:1 light) are below AA and are therefore used only for
-   chrome — the line-number gutter and its divider — never for a token that
-   carries meaning. See the notes on the gutter block near the bottom.
+   chrome — a hairline divider, an inset rule — never for a token that
+   carries meaning, and never for the copy-mode digits (section 6 says why
+   they are --id-muted and not the `fg=dim` the tmux config asks for).
+
+   MAP
+     1  container: div.highlighter-rouge / div.highlight / pre.highlight
+     2  the Rouge table (dormant: block.line_numbers is false in _config.yml)
+     3  Rouge's own line-number gutter, and the clipboard bug it caused
+     4  tokens, grouped by --id-* role
+     5  the SECOND container: figure.highlight, which {% highlight %} emits
+     6  copy mode — the replacement gutter that cannot reach the clipboard
+     7  marked lines — mark_lines / .hll
+     8  the language label, drawn from the wrapper class
+     9  the three local lexers in _plugins/ (hexdump, telescope, objdump)
    ========================================================================== */
 
 
@@ -44,15 +61,15 @@
 
 div.highlighter-rouge {
   margin: 1.25rem 0;
-  border: 1px solid var(--id-border);
+  border: 1px solid var(--id-border, #d5c4a1);
   border-radius: 6px;
   overflow: hidden; /* clips the code background to the rounded corners */
-  background: var(--id-bg-deep);
+  background: var(--id-bg-deep, #f4e8be);
 }
 
 div.highlight {
-  background: var(--id-bg-deep);
-  color: var(--id-fg); /* plaintext blocks emit no spans at all — this is them */
+  background: var(--id-bg-deep, #f4e8be);
+  color: var(--id-fg, #654735); /* plaintext blocks emit no spans at all — this is them */
   overflow-x: auto;    /* long exploit lines scroll here, not on the page body */
   tab-size: 4;
   -moz-tab-size: 4;
@@ -80,12 +97,32 @@ pre.highlight {
   color: inherit;
 }
 
+/* `font: inherit` is here to undo the UA stylesheet on <code> (monospace at
+   font-size: smaller). The two restatements after it are not decoration:
+   `font` is a shorthand whose reset-only sub-properties include
+   font-feature-settings and every font-variant-* longhand, so main.css's two
+   global type decisions — `font-variant-ligatures: none` and
+   font-feature-settings: "zero" 1 on <body> — were being reset to normal
+   INSIDE every code block. That is the whole of it: ligatures came back on in
+   the one place they must never fire (`===>`, `->`, `!=`, `─➜` and the `x` of
+   `0x00` all ligate in Maple Mono with calt on) and the slashed zero came off
+   in the one place a page full of 0x-prefixed hex actually needs it. Same
+   defence, same reason, as .themebtn and .picker__row in main.css.
+   Also width/min-width: the code element is the row box that the copy-mode
+   gutter (section 6), the marked-row ground (section 7) and any full-row fill
+   are drawn on, so it has to be as wide as the widest line AND at least as
+   wide as the scroll container — otherwise a row's ground stops at the
+   visible edge and a scrolled line runs out of its own highlight. */
 div.highlight > pre.highlight > code {
   display: block;
+  width: max-content;
+  min-width: 100%;
   padding: 0;
   background: none;
   border: 0;
   font: inherit;
+  font-variant-ligatures: inherit;
+  font-feature-settings: inherit;
   color: inherit;
 }
 
@@ -211,9 +248,9 @@ pre.lineno,
   padding: 0.85rem 0.7rem 0.85rem 0.85rem;
   text-align: right;
   white-space: nowrap;
-  background: var(--id-bg-deep); /* opaque, so scrolled code passes behind it */
+  background: var(--id-bg-deep, #f4e8be); /* opaque, so scrolled code passes behind it */
   /* inset shadow instead of border-right: survives position:sticky cleanly */
-  box-shadow: inset -1px 0 0 var(--id-faint);
+  box-shadow: inset -1px 0 0 var(--id-faint, #a9a39a);
 }
 
 /* --id-dim / --id-faint are the two roles that do NOT clear 4.5:1
@@ -227,7 +264,7 @@ pre.lineno,
 .gl,
 pre.lineno,
 .lineno {
-  color: var(--id-dim);
+  color: var(--id-dim, #928374);
 }
 
 pre.lineno,
@@ -238,6 +275,8 @@ pre.lineno,
   background: none;
   overflow: visible;
   font: inherit;
+  font-variant-ligatures: inherit;  /* see the note on the code element above */
+  font-feature-settings: inherit;
 }
 
 /* Cosmetic reinforcement — see layer 3 above. */
@@ -245,13 +284,13 @@ pre.lineno,
 pre.lineno::selection,
 .lineno::selection {
   background: transparent;
-  color: var(--id-dim);
+  color: var(--id-dim, #928374);
 }
 .rouge-gutter::-moz-selection,
 pre.lineno::-moz-selection,
 .lineno::-moz-selection {
   background: transparent;
-  color: var(--id-dim);
+  color: var(--id-dim, #928374);
 }
 
 /* Re-assert selectability on the code side. Deliberately applied to the cell
@@ -284,7 +323,7 @@ pre.lineno::-moz-selection,
 .highlight .py,  /* Name.Property                  */
 .highlight .w,   /* Text.Whitespace                */
 .highlight .x {  /* Other                          */
-  color: var(--id-fg);
+  color: var(--id-fg, #654735);
 }
 
 /* --- keywords -------------------------------------------------------------
@@ -299,21 +338,21 @@ pre.lineno::-moz-selection,
 .highlight .kv,  /* Keyword.Variable               */
 .highlight .ow,  /* Operator.Word         [post] */
 .highlight .ne { /* Name.Exception                 */
-  color: var(--id-danger);
+  color: var(--id-danger, #b43e3e);
 }
 
 /* --- callables and class names -------------------------------------------- */
 .highlight .nf,  /* Name.Function  [post] (python calls; nasm mnemonics; make targets) */
 .highlight .fm,  /* Name.Function.Magic            */
 .highlight .nc { /* Name.Class     [post] (C++ Binary/CallFrame/Backtrace)  */
-  color: var(--id-success);
+  color: var(--id-success, #626d2a);
 }
 
 /* --- types and namespaces ------------------------------------------------- */
 .highlight .kt,  /* Keyword.Type   [post] (int/long/void/char/bool/uint64_t) */
 .highlight .nn,  /* Name.Namespace                 */
 .highlight .ld { /* Literal.Date                   */
-  color: var(--id-accent);
+  color: var(--id-accent, #925c07);
 }
 
 /* --- strings --------------------------------------------------------------
@@ -337,7 +376,7 @@ pre.lineno::-moz-selection,
 .highlight .sx,  /* Literal.String.Other             */
 .highlight .dl,  /* Literal.String.Delimiter  (js)   */
 .highlight .cpf {/* Comment.PreprocFile       [post] (<vector>, <stdio.h>) */
-  color: var(--id-accent);
+  color: var(--id-accent, #925c07);
 }
 
 /* --- numbers -------------------------------------------------------------- */
@@ -349,7 +388,7 @@ pre.lineno::-moz-selection,
 .highlight .mo,  /* Literal.Number.Oct                */
 .highlight .il,  /* Literal.Number.Integer.Long       */
 .highlight .l {  /* Literal                           */
-  color: var(--id-special);
+  color: var(--id-special, #8b5878);
 }
 
 /* --- builtins, constants, and the "active" bits inside strings ------------
@@ -372,7 +411,7 @@ pre.lineno::-moz-selection,
 .highlight .ni,  /* Name.Entity          (html &amp;)                */
 .highlight .nd,  /* Name.Decorator                                   */
 .highlight .cp { /* Comment.Preproc      [post] (#include, #define)  */
-  color: var(--id-accent2);
+  color: var(--id-accent2, #a65009);
 }
 
 /* .cp and .cpf are Comment.* in Rouge's token tree but they are NOT comments
@@ -389,7 +428,7 @@ pre.lineno::-moz-selection,
 .highlight .nt,  /* Name.Tag       [post] (bash flags -o/--obj/-std; html tags) */
 .highlight .na,  /* Name.Attribute (html attrs; yaml keys)  */
 .highlight .nl { /* Name.Label     (json keys; nasm labels) */
-  color: var(--id-info);
+  color: var(--id-info, #436d77);
 }
 
 /* --- comments -------------------------------------------------------------
@@ -404,7 +443,7 @@ pre.lineno::-moz-selection,
 .highlight .ch,  /* Comment.Hashbang        */
 .highlight .cd,  /* Comment.Doc             */
 .highlight .cs { /* Comment.Special         */
-  color: var(--id-muted);
+  color: var(--id-muted, #6b665f);
   font-style: italic;
 }
 
@@ -419,7 +458,7 @@ pre.lineno::-moz-selection,
 .highlight .pi,  /* Punctuation.Indicator (yaml) */
 .highlight .go { /* Generic.Output — console transcripts: what the program
                     printed, as opposed to what the reader typed */
-  color: var(--id-muted);
+  color: var(--id-muted, #6b665f);
   font-style: normal;
 }
 
@@ -427,7 +466,7 @@ pre.lineno::-moz-selection,
    clipboard reasoning as the line-number gutter — copying `$ ls -la` must
    yield `ls -la`, not a shell prompt. */
 .highlight .gp {
-  color: var(--id-muted);
+  color: var(--id-muted, #6b665f);
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -436,13 +475,13 @@ pre.lineno::-moz-selection,
 
 /* --- diffs ---------------------------------------------------------------- */
 .highlight .gd { /* Generic.Deleted */
-  color: var(--id-danger);
-  background: color-mix(in srgb, var(--id-danger) 12%, transparent);
+  color: var(--id-danger, #b43e3e);
+  background: color-mix(in srgb, var(--id-danger, #b43e3e) 12%, transparent);
 }
 
 .highlight .gi { /* Generic.Inserted */
-  color: var(--id-success);
-  background: color-mix(in srgb, var(--id-success) 12%, transparent);
+  color: var(--id-success, #626d2a);
+  background: color-mix(in srgb, var(--id-success, #626d2a) 12%, transparent);
 }
 
 /* Rouge's diff lexer tags the `@@ -1,3 +1,3 @@` hunk header as Punctuation,
@@ -450,22 +489,22 @@ pre.lineno::-moz-selection,
    other punctuation. Scoped to the diff wrapper class kramdown emits. */
 .language-diff .highlight .p,
 .language-diff .p {
-  color: var(--id-info);
+  color: var(--id-info, #436d77);
 }
 
 /* --- generic / prose tokens ----------------------------------------------- */
 .highlight .gh { /* Generic.Heading */
-  color: var(--id-fg-strong);
+  color: var(--id-fg-strong, #4f3829);
   font-weight: 700;
 }
 
 .highlight .gu { /* Generic.Subheading */
-  color: var(--id-info);
+  color: var(--id-info, #436d77);
   font-weight: 700;
 }
 
 .highlight .gs { /* Generic.Strong */
-  color: var(--id-fg-strong);
+  color: var(--id-fg-strong, #4f3829);
   font-weight: 700;
 }
 
@@ -475,7 +514,7 @@ pre.lineno::-moz-selection,
 
 .highlight .gr,  /* Generic.Error     */
 .highlight .gt { /* Generic.Traceback */
-  color: var(--id-danger);
+  color: var(--id-danger, #b43e3e);
 }
 
 /* --- lexer errors ---------------------------------------------------------
@@ -489,7 +528,554 @@ pre.lineno::-moz-selection,
    than as an alarm, which is the correct level of alarm for a lexer that
    simply gave up on a tab character. */
 .highlight .err {
-  color: var(--id-warning);
+  color: var(--id-warning, #925c07);
   background: none;
   text-decoration: none;
+}
+
+
+/* ==========================================================================
+   5. THE SECOND CONTAINER  —  figure.highlight
+   --------------------------------------------------------------------------
+   Sections 1-4 describe what kramdown + Rouge emit for a fenced block.
+   Jekyll's own {% highlight %} tag emits something else entirely:
+
+     <figure class="highlight">
+       > <pre>
+           > <code class="language-cpp" data-lang="cpp">
+
+   No div.highlighter-rouge, no div.highlight, and no .highlight on the <pre>
+   (jekyll-4.4.1/lib/jekyll/tags/highlight.rb, add_code_tag — read, not
+   guessed). The token rules in section 4 do still fire, because the FIGURE
+   carries the .highlight class those descendant selectors key on; every
+   container rule in section 1 misses it, so until this block a
+   {% highlight %} block rendered as unframed, unpadded, page-size text on the
+   page ground, with the syntax colours floating on nothing.
+
+   It has to be dealt with because {% highlight %} is the ONLY way to pass
+   mark_lines (section 7). kramdown's fences take LEXER options after a `?`
+   (```console?prompt=$) and no formatter options at all, and mark_lines is a
+   formatter option.
+
+   Two things this cannot fix from here, both of them main.css's to own:
+   `.prose > .highlighter-rouge` is what puts fenced code on the wide grid
+   track, and `.prose div.highlight` is what sets its font-size — neither
+   selector matches a figure, so a marked block sits at the reading measure
+   until main.css names it. The font-size below is a floor for that gap, not a
+   claim on it: it is the one property section 1 deliberately leaves to the
+   page, and any `.prose > figure.highlight` rule out-specifies it.
+   -------------------------------------------------------------------------- */
+
+figure.highlight {
+  position: relative;   /* the language label in section 8 anchors on this */
+  margin: 1.25rem 0;
+  border: 1px solid var(--id-border, #d5c4a1);
+  border-radius: 6px;
+  background: var(--id-bg-deep, #f4e8be);
+  color: var(--id-fg, #654735);
+  overflow: hidden;     /* clips the code ground to the rounded corners */
+  font-size: var(--fs-sm, 0.8125rem);
+  line-height: 1.6;
+}
+
+figure.highlight > pre {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  overflow-x: auto;     /* the sideways scroller, as div.highlight is for fences */
+  tab-size: 4;
+  -moz-tab-size: 4;
+}
+
+figure.highlight > pre > code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-variant-ligatures: inherit;  /* see the note on the fenced code element */
+  font-feature-settings: inherit;
+  color: inherit;
+}
+
+
+/* ==========================================================================
+   6. COPY MODE  —  the gutter that cannot reach the clipboard   [CODE-01]
+   --------------------------------------------------------------------------
+   tmux: `copy-mode-line-numbers hybrid`. The gutter exists ONLY inside copy
+   mode, and this is the one thing in this file a reader switches.
+
+   THE MARKUP, both halves of which already exist:
+     _plugins/code_lines.rb wraps every logical line of every kramdown/Rouge
+     block in <span class="cl" id="bNLM"> — N the block index in the page, M
+     the line index in the block, both 1-based, so the third line of the first
+     block is #b1L3 — with the newline inside the span, which is Chroma's
+     convention and the reason `display: block` below does not double-space.
+     _layouts/post.html carries <input class="vh" type="checkbox" id="copymode">
+     as a sibling BEFORE .prose, plus the `[ copy mode` label that operates it.
+
+   WHY GENERATED CONTENT AND NOT user-select: none.  Section 3 removed Rouge's
+   own digits with user-select: none, which is the strongest thing available
+   for text that IS in the document — and it is not strong enough. WebKit has
+   copied user-select:none text into the clipboard since 2012 (bug 80159, open
+   at the time of writing), so on Safari the old gutter could still land in a
+   paste. counter(ln) in a ::before is not in the DOM at all: there is no text
+   node for any engine to serialise, so no engine can copy it. Strictly
+   stronger than section 3's mitigation, and it costs one span per line that
+   _plugins/code_lines.rb was already emitting.
+
+   `content: counter(ln)` is stated twice, plain and then with the `/ ""`
+   empty-alt form. That is a cascade fallback and it defuses the one caveat on
+   this idea: an engine that cannot parse the alt syntax drops the whole
+   declaration, so a lone `content: counter(ln) / ""` would have meant NO
+   gutter there at all. With both, that engine keeps the digits (they are then
+   also in the accessibility tree and in Ctrl+F, which is the cost) and every
+   current engine takes the second declaration and keeps them out of both.
+
+   NOT STICKY, unlike section 3's gutter. That one was a table cell in its own
+   column and could be pinned to the scroll container. These digits are a
+   pseudo-element on the line itself: pinning them would need an opaque ground
+   of their own, which then has to track the marked-row ground (section 7) and
+   the hover ground below, and get it wrong and the digits sit in a
+   differently-coloured notch. They scroll with their line instead. A terminal
+   has no horizontal scroll for this to disagree with.
+   -------------------------------------------------------------------------- */
+
+pre.highlight,
+figure.highlight > pre {
+  counter-reset: ln;   /* per block, so every block starts at 1 */
+}
+
+.cl {
+  display: block;
+  counter-increment: ln;
+  /* .tmux is position: sticky, so a link to #b1L3 has to clear it the same way
+     main.css clears it for headings. */
+  scroll-margin-block-start: calc(var(--bar-h, 1.75rem) + 1.5rem);
+}
+
+/* The gutter box. There is deliberately no `content` in this rule: with no
+   content no box is generated at all, so with copy mode off the gutter is
+   ABSENT rather than invisible — nothing to select, nothing to copy, no
+   reflow, no ink. Everything else about it can therefore be stated
+   unconditionally, and switching the mode on is one declaration.
+
+   --id-muted, not the `fg=dim` copy-mode-line-number-style asks for.
+   --id-dim is 2.99:1 on --id-bg-deep in the light theme. Section 3 could
+   spend that on Rouge's digits — they were unselectable, uncopyable and
+   duplicated by the code beside them — but these digits are the reason a
+   reader turned copy mode on, so they are content. --id-muted is 4.64:1 light
+   / 6.55:1 dark, and the hairline divider keeps them from reading as part of
+   the code even at the same weight as the punctuation.
+
+   user-select is belt only. Generated content is not in the DOM to be
+   selected; the declaration is here so that a future refactor which turns the
+   gutter back into real spans cannot silently regress past it. */
+.cl::before {
+  display: inline-block;
+  min-width: 3ch;   /* three digits; the longest block in the post is 46 lines,
+                       and a 1000-line block would shift by 1ch rather than
+                       overlap the divider */
+  margin-inline-end: 1ch;
+  padding-inline-end: 0.75ch;
+  border-inline-end: 1px solid var(--id-faint, #a9a39a);
+  text-align: right;
+  font-weight: 400;
+  color: var(--id-muted, #6b665f);
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* THE FEATURE. Two rules with one body, deliberately not one rule with two
+   selectors: `:has()` is not universally supported, and an unsupported
+   selector invalidates its ENTIRE list — which would have taken the sibling
+   form down with it. The sibling form works everywhere and depends on the
+   checkbox staying a preceding sibling of .prose (post.html says so, and says
+   why); the :has() form depends on neither position nor engine age. */
+:root:has(#copymode:checked) .cl::before {
+  content: counter(ln);
+  content: counter(ln) / "";
+}
+
+#copymode:checked ~ .prose .cl::before {
+  content: counter(ln);
+  content: counter(ln) / "";
+}
+
+/* copy-mode-current-line-number-style "fg=pink,bold" */
+.cl:target::before {
+  color: var(--id-pane-active, #a15335);   /* 4.50:1 light / 6.61:1 dark */
+  font-weight: 700;
+}
+
+/* The cursor line has to be findable with the gutter off too: a link to
+   #b1L3 from another post is not conditional on the reader's copy mode.
+   A LIFT, not a tinted fill. Every token in section 4 sits at 4.5-4.6:1 on
+   --id-bg-deep by construction, so the palette has ~0.15 of headroom and any
+   fill that darkens the ground in the light theme spends more than that:
+   measured, --id-panel at 65% puts punctuation at 4.17:1 and --id-select-bg
+   puts it at 4.33:1. --id-bg is lighter than --id-bg-deep in light AND in
+   dark, so it moves every token the right way instead — worst case 4.87:1
+   light / 4.70:1 dark. (::selection is the one place --id-select-bg is
+   correct, and main.css already owns it: it replaces the FOREGROUND too, with
+   --id-select-fg at 4.67:1 on the fill, which is how tmux gets away with a
+   mode-style that quiet.) */
+.cl:target {
+  background: var(--id-bg, #fbf1c7);
+  box-shadow: inset 2px 0 0 var(--id-pane-active, #a15335);
+}
+
+/* The pointer analogue of moving the copy-mode cursor, gated on the mode so
+   that an ordinary read does not light rows up under the pointer. */
+:root:has(#copymode:checked) .cl:hover {
+  background: var(--id-bg, #fbf1c7);
+}
+
+/* copy-mode-match-style "fg=panel_inset,bg=yellow" and
+   copy-mode-current-match-style "fg=panel_inset,bg=pink,bold". panel_inset is
+   not a generated role — interdot-theme.css does not emit it — and
+   --id-bg-deep is what it resolves to here, which means a match is the code
+   ground and an accent trading places, exactly what the terminal does.
+   Measured: --id-bg-deep on --id-accent is 4.56:1 light / 7.43:1 dark, and on
+   --id-pane-active 4.50:1 light / 6.61:1 dark.
+
+   Two surfaces, because the web has two ways to arrive at a match:
+   ::target-text is a scroll-to-text-fragment link (#:~:text=…) landing on
+   one, and <mark> is one that something in the page put there. A highlight
+   pseudo-element may only take non-layout-affecting properties, so the `bold`
+   of the current-match style can only be honoured on the <mark> half — the
+   same limit main.css documents for ::selection. */
+div.highlight ::target-text,
+figure.highlight ::target-text,
+div.highlight mark,
+figure.highlight mark {
+  background: var(--id-accent, #925c07);
+  color: var(--id-bg-deep, #f4e8be);
+}
+
+/* The current match is the one on the cursor line, which is what tmux means
+   by "current" — the cursor is how you got to it. */
+.cl:target mark {
+  background: var(--id-pane-active, #a15335);
+  color: var(--id-bg-deep, #f4e8be);
+  font-weight: 700;
+}
+
+
+/* ==========================================================================
+   7. MARKED LINES  —  mark_lines / .hll                         [CODE-05]
+   --------------------------------------------------------------------------
+   Rouge has shipped the line highlighter all along and nothing drew it.
+   Authoring is Jekyll's tag, and only Jekyll's tag:
+
+     {% highlight cpp mark_lines="3" %}
+     ...
+     {% endhighlight %}
+
+   which wraps Rouge::Formatters::HTMLLineHighlighter around the HTML
+   formatter and puts the marked line — the newline included — in
+   <span class="hll"> (rouge-4.7.0/lib/rouge/formatters/html_line_highlighter.rb).
+   Do NOT add `linenos` to that tag: it switches on HTMLTable and brings back
+   the real-digit gutter that section 3 exists to have removed. Line numbers
+   are section 6's job now.
+
+   THE GROUND, measured. The specimen this comes from tinted the row with
+   color-mix(in srgb, var(--id-danger) 11%, transparent) over --id-bg-deep,
+   and a reviewer measured the row's own punctuation at 4.00:1 in the light
+   theme. That is structural rather than a tuning error: section 4's palette
+   is deliberately at 4.5-4.6:1 on --id-bg-deep, so it has about 0.15 of
+   headroom and any mid-luminance wash spends more than that. Over
+   --id-bg-deep in light: 11% -> 4.00:1, 8% -> 4.16:1, 6% -> 4.29:1. No tint
+   percentage keeps AA, so a lighter tint alone was not the fix.
+
+   Tinting the PAGE ground instead makes the row a lift and a wash at once.
+   color-mix(in srgb, var(--id-danger) 3%, var(--id-bg)) is #f9ecc3 light /
+   #2e2a2a dark, and every token clears 4.5:1 on it: worst case 4.68:1 light
+   (--id-accent2 / --id-special) and 4.52:1 dark (--id-danger — the keyword
+   colour standing on its own hue). Both are better than the same token on the
+   untinted code ground. The plain --id-bg declaration in front of it is the
+   fallback for an engine without color-mix: same lift, no hue.
+
+   NON-COLOUR CHANNELS, because WCAG 1.4.1 forbids hue as the only one:
+     1. the row has a left rule and no other row has one — presence;
+     2. its ground is lighter than the block's — luminance;
+     3. a ✗ trails the line — shape. Generated content deliberately: an
+        inline marker span would ride along on copy, and a reserved marker
+        COLUMN would have to be reserved on all 466 code lines in the post to
+        keep every block's columns aligned. Trailing, it can collide with
+        nothing and shifts not one character of code.
+     4. and in copy mode the row's own digits go danger and bold.
+   -------------------------------------------------------------------------- */
+
+.hll {
+  display: block;
+  background: var(--id-bg, #fbf1c7);
+  background: color-mix(in srgb, var(--id-danger, #b43e3e) 3%, var(--id-bg, #fbf1c7));
+  box-shadow: inset 2px 0 0 var(--id-danger, #b43e3e);
+}
+
+.hll::after {
+  content: "  ✗" / "";
+  color: var(--id-danger, #b43e3e);   /* 4.67:1 light / 4.52:1 dark on the row */
+}
+
+/* Channel 4. It can only fire once a marked block also has .cl lines, and
+   today it cannot: _plugins/code_lines.rb matches div.highlight >
+   pre.highlight > code, which is the one container mark_lines never produces.
+   Kept because it is the correct rule the day those two meet, and it costs
+   nothing while they do not. */
+.cl:has(> .hll)::before {
+  color: var(--id-danger, #b43e3e);
+  font-weight: 700;
+}
+
+
+/* ==========================================================================
+   8. THE LANGUAGE LABEL                                         [CODE-08]
+   --------------------------------------------------------------------------
+   leaf specifies `code_label = dim`. --id-dim is 2.99:1 on the code ground in
+   the light theme and a language name is information, so this is --id-muted
+   (4.64:1 / 6.55:1) — the same substitution section 4 makes for comments.
+
+   NO NEW MARKUP. kramdown already writes the language into the wrapper class
+   (div.language-cpp.highlighter-rouge) and {% highlight %} already writes it
+   into a data-lang attribute on the <code>, so the label is drawn from what
+   is there rather than added. attr() can only read the element's own
+   attributes, which is why there are two halves: an enumerated list for the
+   class, because a class name cannot be read out as a string, and a single
+   attr() rule for the figure.
+
+   WHERE IT SITS. Absolutely positioned in the wrapper's top-right corner,
+   which is OUTSIDE the scroll container — div.highlight is the scroller and
+   the wrapper is not, and for the figure the containing block is the figure
+   while the scroller is the <pre> inside it. Scrolled code therefore cannot
+   reach it, which is the failure the rejected half of the specimen showed:
+   with the label positioned on the block itself, the 91-character first line
+   of Symbolizer::Symbolicate() ran underneath it before the reader had
+   scrolled at all. It also lands inside the block's own top padding, so it
+   overlaps no line even at scroll 0, and pointer-events: none means it can
+   never eat a click meant for the code.
+
+   ON HOVER, NOT ALWAYS. 45 blocks would be 45 more standing things on a page
+   that is already 25,000px tall, and a fenced block's language is almost
+   always obvious from the code in it. Revealed on :hover and on
+   :focus-within — the second half is not decoration, a keyboard reader who
+   tabs into a focusable region inside a block gets the same label a pointer
+   does. Print shows it unconditionally, because print has no hover.
+   -------------------------------------------------------------------------- */
+
+div.highlighter-rouge { position: relative; }
+
+div.highlighter-rouge::before,
+figure.highlight > pre > code[data-lang]::before {
+  position: absolute;
+  inset-block-start: 0.15rem;
+  inset-inline-end: 0.5rem;
+  z-index: 2;
+  padding-inline: 0.5ch;
+  background: var(--id-bg-deep, #f4e8be);
+  color: var(--id-muted, #6b665f);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+/* One line per language, and only for languages this blog has or will
+   plausibly have. A fence in anything else simply gets no content, and with
+   no content there is no box — the same mechanism the copy-mode gutter uses
+   to be absent rather than hidden. */
+div.language-cpp::before        { content: "cpp" / ""; }
+div.language-c::before          { content: "c" / ""; }
+div.language-python::before     { content: "python" / ""; }
+div.language-bash::before       { content: "bash" / ""; }
+div.language-shell::before      { content: "shell" / ""; }
+div.language-console::before    { content: "console" / ""; }
+div.language-diff::before       { content: "diff" / ""; }
+div.language-make::before       { content: "make" / ""; }
+div.language-nasm::before       { content: "nasm" / ""; }
+div.language-ruby::before       { content: "ruby" / ""; }
+div.language-javascript::before { content: "javascript" / ""; }
+div.language-json::before       { content: "json" / ""; }
+div.language-yaml::before       { content: "yaml" / ""; }
+div.language-html::before       { content: "html" / ""; }
+div.language-rust::before       { content: "rust" / ""; }
+div.language-go::before         { content: "go" / ""; }
+/* the three lexers in _plugins/, each under every alias it registers */
+div.language-hexdump::before    { content: "hexdump" / ""; }
+div.language-xxd::before        { content: "xxd" / ""; }
+div.language-hexyl::before      { content: "hexyl" / ""; }
+div.language-telescope::before  { content: "telescope" / ""; }
+div.language-pwndbg::before     { content: "pwndbg" / ""; }
+div.language-gef::before        { content: "gef" / ""; }
+div.language-objdump::before    { content: "objdump" / ""; }
+div.language-gas::before        { content: "gas" / ""; }
+div.language-asm::before        { content: "asm" / ""; }
+div.language-disas::before      { content: "disas" / ""; }
+div.language-gdb::before        { content: "gdb" / ""; }
+
+figure.highlight > pre > code[data-lang]::before {
+  content: attr(data-lang);
+  content: attr(data-lang) / "";
+}
+
+div.highlighter-rouge:hover::before,
+div.highlighter-rouge:focus-within::before,
+figure.highlight:hover > pre > code[data-lang]::before,
+figure.highlight:focus-within > pre > code[data-lang]::before {
+  opacity: 1;
+}
+
+@media print {
+  div.highlighter-rouge::before,
+  figure.highlight > pre > code[data-lang]::before { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  div.highlighter-rouge::before,
+  figure.highlight > pre > code[data-lang]::before { transition: none; }
+}
+
+
+/* ==========================================================================
+   9. THE THREE LOCAL LEXERS      [PWN-01 hexdump, PWN-03 telescope, objdump]
+   --------------------------------------------------------------------------
+   Rouge 4.7.0 has no lexer for a hex dump, for pwndbg output, or for
+   disassembly — Rouge::Lexer.find returns nil for all of hexdump, gdb,
+   objdump, gas and asm — which is why the madcore post fences its dumps as
+   ```python today. _plugins/hexdump_lexer.rb, telescope_lexer.rb and
+   objdump_lexer.rb add them, and each one documents the token it emits per
+   role. Those tokens are Rouge's standard classes, on purpose: a block still
+   reads correctly with none of the rules below, because section 4 already
+   colours every class the three lexers use. What follows is only the handful
+   of places where the role a class resolves to in code is the wrong role for
+   the same class in a dump.
+
+   If a lexer's token choice changes, the class names in these comments are
+   the contract to reconcile against.
+   -------------------------------------------------------------------------- */
+
+/* --- hexdump / xxd / hexyl  [PWN-01] --------------------------------------
+   hexdump_lexer.rb parses each line into offset / hex column / ASCII pane and
+   colours BOTH columns from one decision per byte, so these classes are byte
+   CATEGORIES, not syntax:
+
+     .gp   offset column, and the `*` repeat marker   Generic::Prompt
+     .go   null byte, 00                              Generic::Output
+     .s    printable ASCII, 21..7e                    Literal::String
+     .w    whitespace byte, 09-0d and 20              Text::Whitespace
+     .mh   non-ASCII and C0 control                   Literal::Number::Hex
+     .p    the `|` pane guards of `hexdump -C`        Punctuation
+     —     anything that is not a dump line           Text
+
+   The offset column needs nothing from this section: .gp is already
+   --id-muted and already user-select: none in section 4, for exactly the
+   reason it is wanted here — copying a dump has to yield bytes, not
+   addresses, which is the line-number argument again with a different column.
+
+   Null bytes are pinned to --id-muted here even though section 4 already
+   puts .go there. They are the majority of every dump in the post and they
+   are CONTENT — "this region is zero" is the observation a heap writeup is
+   making — so they may not drift onto --id-dim (2.99:1 light) the way a
+   receding role invites. --id-muted is 4.64:1 light / 6.55:1 dark.
+
+   Printable / whitespace / non-ASCII take hexyl's three hues, which in this
+   palette are: --id-success 4.58:1 light / 7.47:1 dark, --id-info 4.64:1 /
+   6.60:1, --id-accent2 4.54:1 / 6.36:1. .w has to be named because section 4
+   groups Text.Whitespace with plain identifiers on --id-fg, which would make
+   a 20 byte indistinguishable from a filename character.
+
+   Hue is not the only channel: the lexer substitutes 0 / _ / · for xxd's
+   ambiguous `.` in the pane (PANE_GLYPHS), so each category reads as a
+   different GLYPH there as well as a different colour. */
+div:is(.language-hexdump, .language-xxd, .language-hexyl) .highlight .go {
+  color: var(--id-muted, #6b665f);
+}
+div:is(.language-hexdump, .language-xxd, .language-hexyl) .highlight .s {
+  color: var(--id-success, #626d2a);
+}
+div:is(.language-hexdump, .language-xxd, .language-hexyl) .highlight .w {
+  color: var(--id-info, #436d77);
+}
+div:is(.language-hexdump, .language-xxd, .language-hexyl) .highlight .mh {
+  color: var(--id-accent2, #a65009);
+}
+
+/* --- telescope / pwndbg / gef  [PWN-03] -----------------------------------
+   telescope_lexer.rb's contract:
+
+     .gp   `00:0000│` index gutter, `pwndbg>`   Generic::Prompt
+     .p    banner rules, chain arrows, `│`      Punctuation
+     .gu   banner label, `[ REGISTERS ]`        Generic::Subheading
+     .nv   register name, RSI / rax             Name::Variable
+     .gs   frame marker, rsp / rbp, and `*`     Generic::Strong
+     .mh   hex value, 0x5647a04a5730            Literal::Number::Hex
+     .mi   decimal value (info registers)       Literal::Number::Integer
+     .s    the string at the end of a chain     Literal::String
+     .nf   symbol, (ParseNtFile+0x11a)          Name::Function
+     .nl   x/10xg row address                   Name::Label
+     .no   flag set, [ CF SF IF RF ]            Name::Constant
+     .c1   `#` notes, and pwndbg's C-comment    Comment::Single / Multiline
+           char annotation (written here as a
+           description, because the literal
+           closes this comment)
+
+   Nine of those twelve want exactly what section 4 gives them. The index
+   gutter is .gp again, so it is muted and unselectable for free.
+
+   .mh drops to body colour: a telescope block is ALL addresses, and 225 hex
+   literals in --id-special would make the purple the page rather than the
+   pointer chain. The values are what the reader is reading, so they take the
+   reading colour and the annotations around them carry the hue.
+
+   .gu goes to --id-accent2, matching what pwndbg's own banner does — it is a
+   section marker inside the output, not a heading in a document.
+
+   And the banner RULES are dimmed, which needs the two sibling selectors
+   below rather than a rule on .p, because the lexer emits the rule, the
+   brackets AND the pointer-chain arrow as Punctuation and Rouge consolidates
+   consecutive same-token runs into one span. So the rule glyphs are exactly
+   the .p that touches the .gu label, and the arrows are every other .p.
+   --id-dim is allowed on that one: `─────` is chrome by any reading, while
+   an arrow means "points at" and stays on --id-muted at 4.64:1. If :has() is
+   missing the whole rule drops and the rules stay muted, which is quieter
+   than intended and no less legible. */
+div:is(.language-telescope, .language-pwndbg, .language-gef) .highlight .mh {
+  color: var(--id-fg, #654735);
+}
+div:is(.language-telescope, .language-pwndbg, .language-gef) .highlight .gu {
+  color: var(--id-accent2, #a65009);
+}
+div:is(.language-telescope, .language-pwndbg, .language-gef) .highlight .p:has(+ .gu),
+div:is(.language-telescope, .language-pwndbg, .language-gef) .highlight .gu + .p {
+  color: var(--id-dim, #928374);
+}
+
+/* --- objdump / gas / asm / disas / gdb ------------------------------------
+   TAB-8, and this is the reason it is scoped. objdump lays its columns out
+   with hard tabs and assumes an 8-column stop; section 1 sets tab-size: 4 on
+   div.highlight, which is right for C++ and Python and puts the opcode byte
+   column of a disassembly half a stop out of line with the mnemonic column
+   under it. objdump_lexer.rb emits tabs verbatim rather than expanding them,
+   precisely so a copied dump is still the bytes objdump printed — so the
+   alignment has to be fixed here, in the only place it can be fixed without
+   touching what the clipboard gets.
+
+   Specificity: (0,3,1) against section 1's (0,1,1), so the inner div wins.
+
+   .nl is the one colour the objdump lexer's contract asks for — an
+   instruction address is a coordinate, not a label, and 200 of them in
+   --id-info would out-shout the mnemonics. --id-muted, 4.64:1 / 6.55:1. */
+div:is(.language-objdump, .language-gas, .language-asm, .language-disas, .language-gdb) div.highlight {
+  tab-size: 8;
+  -moz-tab-size: 8;
+}
+div:is(.language-objdump, .language-gas, .language-asm, .language-disas, .language-gdb) .highlight .nl {
+  color: var(--id-muted, #6b665f);
 }

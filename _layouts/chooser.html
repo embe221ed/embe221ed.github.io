@@ -24,11 +24,9 @@ layout: default
     <section class="pane">
       <span class="pane__title">{{ site.author.name }}@blog:~/{{ label }}</span>
 
+      {%- capture said %}choose-tree {{ label }}{% endcapture -%}
       <h1 class="ps1">
-        <span class="ps1__line">
-          <span class="ps1__caret" aria-hidden="true">❯</span>
-          <span class="ps1__said">choose-tree {{ page.chooser | default: "tags" }}</span>
-        </span>
+        {%- include ps1.html dir=label said=said -%}
       </h1>
 
       <ul class="chooser">

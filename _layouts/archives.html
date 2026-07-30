@@ -1,0 +1,51 @@
+---
+layout: default
+---
+{%- comment -%}
+  /archives/ — restored. It answers 200 on the live site and is in the sitemap,
+  so the rebuild dropping it would have 404'd an indexed URL.
+
+  With one post a full archive page is nearly empty, so this invents no third
+  listing style: it is `ls -R` output over ~/posts, which is the homepage's
+  `ls -la` rows under ls's own recursive `dir:` header, one header per year.
+  Nothing here needs rethinking when the second post lands.
+{%- endcomment -%}
+{%- assign years = site.posts | group_by_exp: "post", "post.date | date: '%Y'" -%}
+<div class="wrap surface-term">
+  <div class="panes">
+    <section class="pane">
+      <span class="pane__title">{{ site.author.name }}@blog:~/posts</span>
+
+      <h1 class="ps1">
+        {%- include ps1.html dir="posts" said="ls -R ~/posts" -%}
+      </h1>
+
+      {%- for year in years %}
+      {%- comment -%}
+        `ls -R` labels every directory it descends into with `path:`. The year is
+        the directory: permalinks are /posts/:title/, but the pane titles and the
+        reader's bridge both address a post as ~/posts/<year>/<slug>, so the tree
+        this page walks is the one the rest of the site already speaks.
+        site.posts is newest-first, so the years come out newest-first too.
+      {%- endcomment -%}
+      <h2 class="arch__year">~/posts/{{ year.name }}:</h2>
+      <ul class="ls">
+        {%- for post in year.items %}
+        {%- include ls-row.html post=post %}
+        {%- endfor %}
+      </ul>
+      {%- endfor %}
+
+      {%- if years.size == 0 %}
+      <p class="term-note">Nothing here yet.</p>
+      {%- else %}
+      <p class="term-note">
+        {{ site.posts | size }} post{% if site.posts.size != 1 %}s{% endif %}
+        across {{ years.size }} year{% if years.size != 1 %}s{% endif %}.
+        Also by <a href="{{ '/categories/' | relative_url }}">category</a>
+        and by <a href="{{ '/tags/' | relative_url }}">tag</a>.
+      </p>
+      {%- endif %}
+    </section>
+  </div>
+</div>

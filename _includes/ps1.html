@@ -1,0 +1,48 @@
+{%- comment -%}
+  The author's real two-line zsh prompt. One include, so the five layouts that
+  draw a prompt cannot drift apart the way the hardcoded strings did.
+
+  Line 1 is `$(virtualenv_prompt_info)%c $(git_prompt_info)`:
+
+    * virtualenv_prompt_info emits nothing here — none of these shells are in a
+      virtualenv — so there is no slot for it in the markup.
+
+    * `%c` is the LAST path component and nothing else. There is no user@host on
+      this line: user@host is `pane-border-format`
+      (`#{user}@#{host_short}:#{pane_current_path}`), which .pane__title already
+      carries three lines up, so writing it here put it on screen twice — and
+      the hardcoded copy said `~/writeups` while the pane it sat in said
+      `~/posts/2022/madcore`.
+
+    * git_prompt_info is literally `git:(main)`. ZSH_THEME_GIT_PROMPT_PREFIX is
+      `%B%{$blue%}git:(%{$magenta%}` where tools.zsh.colors aliases
+      `blue: $grey1$` and `magenta: $pink$` — so the punctuation is grey and the
+      branch is the same terracotta as the tmux accent, never purple. The space
+      before ✗ belongs to ..._DIRTY, not to the branch, which is why the clean
+      form closes tight against the paren and the dirty form does not.
+
+    * U+2387 is absent from the shipped Maple Mono subset. The site emitted it
+      as the branch glyph and it rendered as a tofu box, so it appears nowhere.
+
+  Line 2 is a bare `❯`, green on success.
+
+  Line 1 is aria-hidden: it is shell chrome restating the pane title, which is
+  real text in the same pane, and hiding it keeps the enclosing <h1> to the one
+  thing that is actually the heading — the typed command. That also covers the
+  ✗, whose meaning is otherwise carried by hue alone.
+
+    dir     %c, the last path component. Defaults to ~.
+    branch  checked-out branch. Defaults to main.
+    dirty   truthy to draw the yellow ✗.
+    said    the command typed on line 2.
+    cursor  truthy to draw the one blinking cursor on the site.
+{%- endcomment -%}
+<span class="ps1__ctx" aria-hidden="true">
+  <span class="ps1__dir">{{ include.dir | default: "~" }}</span>
+  <span class="ps1__git">git:(</span><span class="ps1__branch">{{ include.branch | default: "main" }}</span><span class="ps1__git">)</span>{% if include.dirty %} <span class="ps1__dirty">✗</span>{% endif %}
+</span>
+<span class="ps1__line">
+  <span class="ps1__caret" aria-hidden="true">❯</span>
+  {%- if include.said %}<span class="ps1__said">{{ include.said }}</span>{% endif -%}
+  {%- if include.cursor %}<span class="cursor" aria-hidden="true"></span>{% endif -%}
+</span>

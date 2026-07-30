@@ -14,6 +14,11 @@
   <link rel="stylesheet" href="{{ '/assets/css/interdot-theme.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/assets/css/syntax.css' | relative_url }}">
+  {%- comment -%}
+    pwn.css must load after main.css: a couple of its rules tie on specificity
+    with .prose > pre and are settled by source order.
+  {%- endcomment -%}
+  <link rel="stylesheet" href="{{ '/assets/css/pwn.css' | relative_url }}">
 
   {%- comment -%}
     Blocking, before first paint: applies the stored theme so the page never
@@ -43,6 +48,11 @@
     <footer class="foot">
       <span>{{ site.title }} — {{ site.author.team }}</span>
       <a href="https://github.com/{{ site.github.username }}">github</a>
+      {%- comment -%}
+        /archives/ is an indexed URL and in the sitemap. Linked from here and
+        from the homepage listing so it is not reachable by search engines only.
+      {%- endcomment -%}
+      <a href="{{ '/archives/' | relative_url }}">archives</a>
       <a href="{{ '/feed.xml' | relative_url }}">feed</a>
       <span>theme: gruvbox-material · Maple Mono</span>
     </footer>
