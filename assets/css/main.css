@@ -254,12 +254,31 @@ a:hover { text-decoration-thickness: 2px; }
 /* FID-05 — `window-status-separator "#[fg=dim]<U+2758> "`. U+2758 is not in the
  * shipped Maple Mono subset and would render as a tofu box that breaks the cell
  * advance, so the separator is drawn rather than emitted: generated content
- * never lands in a copied window list, and swapping it for a 1px rule later
- * stays a CSS-only change. pointer-events is off because the pseudo-element
- * sits inside the <a> and would otherwise enlarge its click target. */
+ * never lands in a copied window list. pointer-events is off because the
+ * pseudo-element sits inside the <a> and would otherwise enlarge its click
+ * target.
+ *
+ * It is a 1px rule and not a glyph now, for two reasons. U+2758 is a THIN
+ * vertical bar with air above and below it; the nearest available substitute,
+ * U+2502, is box-drawing, so it fills the cell top to bottom and reads as a
+ * table rule cutting through the status line rather than as a gap marker.
+ * And a glyph could not be centred: with `content` sitting inside the second
+ * link, the separator had 1.8ch of gap on its left (both links' padding) and
+ * 1ch on its right (its own trailing space), so it visibly belonged to the name
+ * that followed it instead of standing between the two.
+ *
+ * The negative start margin pulls the rule out of the second link's padding to
+ * land exactly on the boundary between the two boxes, and the equal end margin
+ * restores the space it took — 0.9ch of gap either side, symmetric by
+ * construction rather than by tuning. */
 .tmux__win + .tmux__win::before {
-  content: "\2502 " / "";
-  color: var(--id-dim, #928374);
+  content: "" / "";
+  display: inline-block;
+  width: 1px;
+  height: 0.9em;
+  vertical-align: -0.1em;
+  background: var(--id-dim, #928374);
+  margin-inline: -0.9ch 0.9ch;
   pointer-events: none;
 }
 
@@ -538,16 +557,14 @@ body:has(#copymode:checked) .tmux__flag--mode { display: inline; }
 }
 
 /* ---- section headings on the terminal surface ---- */
-.term-h {
-  margin: var(--s7) 0 var(--s4);
+/* A prompt that is not the hero. Same two lines and the same colours — the
+ * point of the change is that these panes stop having a bespoke heading and
+ * start having a prompt — but it sits directly under the pane title rather
+ * than opening the page, so it needs less air beneath it than the hero's.
+ * (.term-h, the bespoke heading it replaces, is gone: nothing emitted it.) */
+.ps1--pane {
+  margin-block-end: var(--s4);
   font-size: var(--fs-md);
-  font-weight: 700;
-  color: var(--id-muted, #6b665f);
-  letter-spacing: 0.04em;
-}
-.term-h::before {
-  content: "❯ ";
-  color: var(--id-success, #626d2a);
 }
 
 /* ---- post index as `ls -la` output ----

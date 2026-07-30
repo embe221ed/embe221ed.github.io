@@ -29,7 +29,17 @@ layout: default
 
       <section class="pane">
         <span class="pane__title">{{ site.author.name }}@blog:~/writeups</span>
-        <h2 class="term-h">ls -la</h2>
+        {%- comment -%}
+          The same two-line prompt the hero uses, because in a real session
+          every pane has one — a pane showing `ls -la` output got there by
+          someone typing it at a prompt, and the prompt says where. `%c` is the
+          last path component, so it is `writeups` here and the pane border
+          above spells the path out in full, exactly as tmux and zsh divide the
+          job between them.
+        {%- endcomment -%}
+        <h2 class="ps1 ps1--pane">
+          {%- include ps1.html dir="writeups" said="ls -la" -%}
+        </h2>
         <ul class="ls">
           {%- for post in site.posts %}
           {%- include ls-row.html post=post %}
@@ -60,7 +70,9 @@ layout: default
 
       <section class="pane">
         <span class="pane__title">{{ site.author.name }}@blog:~/.config/interdot</span>
-        <h2 class="term-h">interdot list</h2>
+        <h2 class="ps1 ps1--pane">
+          {%- include ps1.html dir="interdot" said="interdot list" -%}
+        </h2>
         <p class="picker__cmd">themes (* = what I'm running)</p>
         <ul class="picker">
           <li>
