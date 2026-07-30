@@ -52,43 +52,26 @@ layout: default
     <div class="panes panes--split">
 
       <section class="pane">
-        <span class="pane__title">{{ site.author.name }}@blog:~/writeups</span>
         {%- comment -%}
-          The same two-line prompt the hero uses, because in a real session
-          every pane has one — a pane showing `ls -la` output got there by
-          someone typing it at a prompt, and the prompt says where. `%c` is the
-          last path component, so it is `writeups` here and the pane border
-          above spells the path out in full, exactly as tmux and zsh divide the
-          job between them.
+          The cwd is home, not ~/writeups: the pane lists everything published,
+          and `writeups` framed the whole site as one category of post. `tree`
+          rather than `ls -la` because posts are grouped by year on disk and a
+          flat listing threw that away — and because the command adapts, picking
+          up `drafts/` as a second root only when there is something in it.
         {%- endcomment -%}
+        <span class="pane__title">{{ site.author.name }}@blog:~</span>
+        {%- capture tree_said %}tree posts/{% if site.data.drafts.size > 0 %} drafts/{% endif %}{% endcapture -%}
         <h2 class="ps1 ps1--pane">
-          {%- include ps1.html dir="writeups" said="ls -la" -%}
+          {%- include ps1.html dir="~" said=tree_said -%}
         </h2>
-        <ul class="ls">
-          {%- for post in site.posts %}
-          {%- include ls-row.html post=post %}
-          {%- endfor %}
-          {%- for d in site.data.drafts %}
-          <li>
-            <span class="ls__row ls__row--draft">
-              <span class="ls__mode" aria-hidden="true">-rw-------</span>
-              <span class="ls__date">{{ d.date }}</span>
-              <span class="ls__name">
-                <span class="ls__cat">{{ d.category }}</span>{{ d.title }} <em>(draft)</em>
-              </span>
-            </span>
-          </li>
-          {%- endfor %}
-        </ul>
+        {%- include tree-posts.html -%}
         {%- comment -%}
           /archives/ is an indexed URL on the live site. Without a link from the
           one surface that lists posts it would be reachable from the sitemap and
           nowhere else, which is how it got dropped in the first place.
         {%- endcomment -%}
         <p class="term-note">
-          {{ site.posts | size }} published{% if site.data.drafts %}, {{ site.data.drafts | size }} draft{% if site.data.drafts.size != 1 %}s{% endif %}{% endif %}.
-          Mode bits are the publish state.
-          <a href="{{ '/archives/' | relative_url }}">ls -R</a>
+          <a href="{{ '/archives/' | relative_url }}">ls -R ~/posts</a>
         </p>
       </section>
 

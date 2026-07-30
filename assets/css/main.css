@@ -590,9 +590,78 @@ a:hover { text-decoration-thickness: 2px; }
  * than opening the page, so it needs less air beneath it than the hero's.
  * (.term-h, the bespoke heading it replaces, is gone: nothing emitted it.) */
 .ps1--pane {
-  margin-block-end: var(--s4);
+  /* Flush, for the reason .ps1--cmd is: a shell prints output on the line after
+   * the command. Both split panes are a command and its output. */
+  margin-block-end: 0;
   font-size: var(--fs-md);
 }
+
+/* ---- `tree posts/` — the homepage index ----
+ * The guides are real box-drawing characters carried in the markup, so
+ * `white-space: pre` is load-bearing: HTML collapses the runs of spaces that
+ * make the indent, and without it every branch would sit at column zero.
+ *
+ * colorls paints directories orange (`dir: $orange$` = --id-accent2) and its
+ * tree guides `$fg_faint$`. The guides are --id-dim here instead: faint is
+ * 2.21:1 in light and these lines ARE the structure, so at that weight the
+ * hierarchy stops being readable. They are aria-hidden either way — the nested
+ * lists carry the shape for anyone not looking at it.
+ */
+.tree { font-size: var(--fs-sm); }
+.tree__root, .tree__lvl, .tree__lvl li { margin: 0; }
+/* A second root is a second argument to the same command, and tree separates
+ * them with a blank line. So does the summary. One line, computed rather than
+ * approximated, so it tracks the type scale. */
+.tree__lvl + .tree__root { margin-block-start: calc(var(--fs-sm) * var(--lh)); }
+.tree__root {
+  color: var(--id-accent2, #a65009);
+  font-weight: 700;
+}
+
+.tree__lvl { list-style: none; margin: 0; padding: 0; }
+.tree__g {
+  white-space: pre;
+  color: var(--id-dim, #928374);
+}
+.tree__dir { color: var(--id-accent2, #a65009); font-weight: 700; }
+
+.tree__row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0 1ch;
+  padding-inline-end: var(--s2);
+  border-radius: 2px;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+a.tree__row:hover,
+a.tree__row:focus-visible {
+  background: var(--id-select-bg, #eee0b7);
+  color: var(--id-select-fg, #9c4b08);
+  font-weight: 700;
+}
+a.tree__row:hover :is(.tree__date, .tree__cat, .tree__name, .tree__g),
+a.tree__row:focus-visible :is(.tree__date, .tree__cat, .tree__name, .tree__g) {
+  color: inherit;
+}
+
+.tree__date { color: var(--id-muted, #6b665f); }
+/* A floor, not a fixed width: categories are short words, so this lines the
+ * titles up without truncating one that is not. */
+.tree__cat { color: var(--id-accent2, #a65009); min-width: 8ch; }
+.tree__name { min-width: 0; overflow-wrap: anywhere; }
+.tree__mode { color: var(--id-dim, #928374); }
+
+.tree__row--draft { color: var(--id-muted, #6b665f); }
+.tree__row--draft .tree__cat { color: var(--id-muted, #6b665f); }
+
+/* tree's own trailing count, and it prints one. */
+.tree__sum {
+  margin-block-start: calc(var(--fs-sm) * var(--lh));
+  color: var(--id-muted, #6b665f);
+}
+.tree__note { color: var(--id-dim, #928374); }
 
 /* ---- post index as `ls -la` output ----
  * No `font-variant-numeric: tabular-nums` anywhere on this site: Maple Mono has
