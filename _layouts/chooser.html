@@ -24,9 +24,15 @@ layout: default
     <section class="pane">
       <span class="pane__title">{{ site.author.name }}@blog:~/{{ label }}</span>
 
-      {%- capture said %}choose-tree {{ label }}{% endcapture -%}
+      {%- comment -%}
+        `choose-tree` takes no argument. The cwd already says which tree this
+        is, the pane border above says it again in full, and `prefix + w` binds
+        `choose-tree` against the current server rather than a named one — so
+        naming it a third time in the command was both redundant and less
+        faithful than leaving it off.
+      {%- endcomment -%}
       <h1 class="ps1">
-        {%- include ps1.html dir=label said=said -%}
+        {%- include ps1.html dir=label said="choose-tree" -%}
       </h1>
 
       <ul class="chooser">
