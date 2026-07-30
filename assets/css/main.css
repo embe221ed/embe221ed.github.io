@@ -557,6 +557,40 @@ body:has(#copymode:checked) .tmux__flag--mode { display: inline; }
 }
 
 /* ---- section headings on the terminal surface ---- */
+/* `whatis` output: NAME (section)  - one-line description.
+ *
+ * A three-column grid rather than one run of inline text, so a description that
+ * wraps hangs under itself instead of running back beneath `blog (7) -`. That
+ * is not what a terminal does — real whatis wraps flush at the terminal width —
+ * but the terminal has no reflow and a browser pane does, and a ragged second
+ * line under a fixed-width label reads as a broken column in a monospace grid.
+ *
+ * The label parts are aria-hidden in the markup: the <h1>'s accessible name has
+ * to be the description alone, not "blog 7 - <description>". */
+.whatis {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr;
+  gap: 0 1ch;
+  margin: 0;
+  font-size: var(--fs);
+  font-weight: 400;
+  line-height: var(--lh);
+  color: var(--id-fg, #654735);
+  letter-spacing: 0;
+}
+.whatis__name { color: var(--id-fg-strong, #4f3829); font-weight: 700; }
+.whatis__sec,
+.whatis__dash { color: var(--id-muted, #6b665f); }
+
+/* A prompt whose output follows it, and the prompt that output returns to.
+ * Both are flush: a shell prints output on the line after the command and the
+ * next prompt on the line after that, with no blank line anywhere. The block's
+ * 1.7 line-height is already generous enough that flush does not read cramped,
+ * and the gaps that were here made three consecutive lines of one session look
+ * like three separate paragraphs. */
+.ps1--cmd { margin-block-end: 0; }
+.ps1__line--idle { margin-block-start: 0; }
+
 /* A prompt that is not the hero. Same two lines and the same colours — the
  * point of the change is that these panes stop having a bespoke heading and
  * start having a prompt — but it sits directly under the pane title rather

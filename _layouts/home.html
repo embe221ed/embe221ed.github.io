@@ -19,10 +19,34 @@ layout: default
       {%- endcomment -%}
       {%- assign dirty = false -%}
       {%- if site.data.drafts.size > 0 %}{% assign dirty = true %}{% endif -%}
-      <h1 class="ps1">
-        {%- include ps1.html dir="~" dirty=dirty said=site.tagline cursor=true -%}
+      {%- comment -%}
+        `whatis blog` — a real command with real output, where the tagline used
+        to sit in the command slot pretending to be one and the description sat
+        under it as output nothing had produced.
+
+        The <h1> moved with it, and that is the more important half: the page's
+        heading is what the site IS, not the command that printed it. The prompt
+        is chrome and is hidden from the accessibility tree, so the heading a
+        screen reader announces is now the description rather than the string
+        `whatis blog` — or, before, `writeups, articles etc.`
+      {%- endcomment -%}
+      <p class="ps1 ps1--cmd" aria-hidden="true">
+        {%- include ps1.html dir="~" dirty=dirty said="whatis blog" -%}
+      </p>
+      <h1 class="whatis">
+        <span class="whatis__name" aria-hidden="true">blog</span><span class="whatis__sec" aria-hidden="true">(7)</span>
+        <span class="whatis__dash" aria-hidden="true">-</span>
+        {{ site.description | strip_newlines | strip }}
       </h1>
-      <p class="term-note">{{ site.description | strip_newlines | strip }}</p>
+      {%- comment -%}
+        The prompt the command returned to. A lone green caret is not a
+        shorthand — it is literally the author's transient prompt, which
+        collapses every finished prompt to exactly this. It carries the one
+        blinking cursor on the site.
+      {%- endcomment -%}
+      <p class="ps1__line ps1__line--idle" aria-hidden="true">
+        <span class="ps1__caret">❯</span><span class="cursor"></span>
+      </p>
     </section>
 
     <div class="panes panes--split">
