@@ -1,0 +1,39 @@
+{%- comment -%}
+  `tre drafts/` — the second invocation, rendered only when _data/drafts.yml
+  has rows.
+
+  A SEPARATE COMMAND, not a second root under the first. tre takes exactly one
+  path — `pub path: String` with default "." in src/cli.rs — so `tre posts/
+  drafts/` is a line tre would reject. GNU tree accepts many paths and would
+  have printed two roots under one command; tre does not, so this is two
+  prompts, which is also what running it twice actually looks like.
+
+  Flat, unlike posts/, and that is not an inconsistency: _drafts/ really is
+  flat — Jekyll does not read subdirectories of it — and a draft has no
+  published taxonomy to file itself under yet. So there are no directories
+  here and nothing takes the trailing slash the posts tree gives them.
+
+  Not links: a draft has no URL to go to. The mode bits carry the state the
+  way they did in the `ls -la` this replaced — `-rw-------` is the file being
+  unreadable by anyone but its owner, which is what an unpublished post is.
+
+    drafts/
+    └── 2026-08-14  writeup  some CTF 2026 — heap note  -rw-------
+{%- endcomment -%}
+<div class="tre">
+  <p class="tre__root">drafts/</p>
+  <ul class="tre__lvl">
+    {%- for d in site.data.drafts -%}
+    {%- if forloop.last %}{% assign dbranch = "└── " %}{% else %}{% assign dbranch = "├── " %}{% endif -%}
+    <li>
+      <span class="tre__row tre__row--draft">
+        <span class="tre__g" aria-hidden="true">{{ dbranch }}</span>
+        <time class="tre__date" datetime="{{ d.date }}">{{ d.date }}</time>
+        {%- if d.category %}<span class="tre__cat">{{ d.category }}</span>{% endif -%}
+        <span class="tre__name">{{ d.title }}</span>
+        <span class="tre__mode" aria-hidden="true">-rw-------</span>
+      </span>
+    </li>
+    {%- endfor -%}
+  </ul>
+</div>

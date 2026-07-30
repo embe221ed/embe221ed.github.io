@@ -637,6 +637,11 @@ a:hover { text-decoration-thickness: 2px; }
  * There is no summary rule here because tre prints no summary. GNU tree's
  * "N directories, M files" used to be the last line and is gone.
  */
+/* A prompt that follows a command's output rather than a pane title. One blank
+ * line above it, computed the same way the rest of this component computes a
+ * line, so output and the next prompt do not run together. */
+.ps1--again { margin-block-start: calc(var(--fs-sm) * var(--lh)); }
+
 .tre { font-size: var(--fs-sm); }
 .tre__root, .tre__lvl, .tre__lvl li { margin: 0; }
 /* A second root is a second argument to the same command, and tre puts a blank

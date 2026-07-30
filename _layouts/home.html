@@ -9,7 +9,7 @@ layout: default
   THREE PANES IN ONE GRID, not a pane above a nested split. The index runs
   `tre posts/` three levels deep and its rows carry a date, a title and the
   tags; at the old 1.55fr share that row had 51 characters to live in and the
-  guides alone took 12. It now spans the full width — measured at 88 — and the
+  guides alone took 12. It now spans the full width — measured at 120 — and the
   theme picker, whose longest row is a 22-character theme name, takes the
   narrow column beside the hero instead of an equal half.
 
@@ -64,16 +64,28 @@ layout: default
     <section class="pane pane--index">
       {%- comment -%}
         The cwd is home, not ~/writeups: the pane lists everything published,
-        and `writeups` framed the whole site as one category of post. The
-        command adapts, picking up `drafts/` as a second root only when there
-        is something in it.
+        and `writeups` framed the whole site as one category of post.
       {%- endcomment -%}
       <span class="pane__title">{{ site.author.name }}@blog:~</span>
-      {%- capture tre_said %}tre posts/{% if site.data.drafts.size > 0 %} drafts/{% endif %}{% endcapture -%}
       <h2 class="ps1 ps1--pane">
-        {%- include ps1.html dir="~" said=tre_said -%}
+        {%- include ps1.html dir="~" dirty=dirty said="tre posts/" -%}
       </h2>
       {%- include tre-posts.html -%}
+      {%- comment -%}
+        Drafts are a SECOND INVOCATION, not a second path on the first. tre
+        takes exactly one path (src/cli.rs), so `tre posts/ drafts/` is a line
+        it would reject — that is GNU tree's calling convention, not tre's.
+        Two prompts is both correct and what running it twice looks like.
+
+        Only when there is something to show: an empty drafts.yml must not put
+        a command on screen that printed nothing.
+      {%- endcomment -%}
+      {%- if site.data.drafts.size > 0 -%}
+      <h2 class="ps1 ps1--pane ps1--again">
+        {%- include ps1.html dir="~" dirty=dirty said="tre drafts/" -%}
+      </h2>
+      {%- include tre-drafts.html -%}
+      {%- endif -%}
       {%- comment -%}
         /archives/ is an indexed URL on the live site. Without a link from the
         one surface that lists posts it would be reachable from the sitemap and

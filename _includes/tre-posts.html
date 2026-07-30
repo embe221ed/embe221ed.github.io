@@ -10,6 +10,16 @@
       why the first line is `posts/` and not `posts`;
     * tre prints NO trailing summary. GNU tree's "N directories, M files" was
       here and is gone — src/output.rs emits entry lines and nothing else.
+    * tre takes exactly ONE path (`pub path: String` in src/cli.rs, default
+      "."). GNU tree takes many. `tre posts/ drafts/` was here and is not a
+      thing tre would accept, so drafts are a second invocation with their own
+      prompt — see tre-drafts.html.
+
+  ONE DELIBERATE DEPARTURE: directory names carry a trailing slash. tre has no
+  -F/--classify — the whole flag set is -a -s -d -e -j -l -E -c -p — and its
+  own tests show a directory entry named "b", no slash. It reads better with
+  one and it is an author's call, so it is here, in the markup rather than in a
+  ::after, so that a copied row still says `writeup/`.
 
   Each row carries its COMPLETE prefix rather than relying on nesting, which
   is what tre itself prints and what keeps a row intact when it is copied on
@@ -31,8 +41,8 @@
   lost to a reader who cannot see the parent line.
 
     posts/
-    └── writeup
-        └── 2022
+    └── writeup/
+        └── 2022/
             └── 07-15  madcore  [pwn binexp googlectf]
 {%- endcomment -%}
 
@@ -45,7 +55,6 @@
 {%- assign dirs = filed | group_by_exp: "p", "p.categories.first" | sort: "name" -%}
 {%- assign ndirs = dirs | size -%}
 {%- assign nunfiled = unfiled | size -%}
-{%- assign ndrafts = site.data.drafts | size -%}
 
 <div class="tre">
   <p class="tre__root">posts/</p>
@@ -71,7 +80,7 @@
         directory to descend into it is the one interaction a tree implies.
       {%- endcomment -%}
       {%- assign catslug = cat.name | slugify -%}
-      <span class="tre__g" aria-hidden="true">{{ cbranch }}</span><a class="tre__dir" href="{{ '/categories/' | append: catslug | append: '/' | relative_url }}">{{ cat.name }}</a>
+      <span class="tre__g" aria-hidden="true">{{ cbranch }}</span><a class="tre__dir" href="{{ '/categories/' | append: catslug | append: '/' | relative_url }}">{{ cat.name }}/</a>
       <ul class="tre__lvl">
         {%- assign years = cat.items | group_by_exp: "p", "p.date | date: '%Y'" -%}
         {%- for y in years -%}
@@ -81,7 +90,7 @@
           {%- assign ybranch = "├── " -%}{%- assign ycarry = "│   " -%}
         {%- endif -%}
         <li>
-          <span class="tre__g" aria-hidden="true">{{ ccarry }}{{ ybranch }}</span><span class="tre__dir">{{ y.name }}</span>
+          <span class="tre__g" aria-hidden="true">{{ ccarry }}{{ ybranch }}</span><span class="tre__dir">{{ y.name }}/</span>
           <ul class="tre__lvl">
             {%- for post in y.items -%}
             {%- if forloop.last %}{% assign pbranch = "└── " %}{% else %}{% assign pbranch = "├── " %}{% endif -%}
@@ -126,36 +135,4 @@
 
   </ul>
 
-  {%- if ndrafts > 0 -%}
-  {%- comment -%}
-    Drafts are a second root, not a branch of the first: they live in
-    _drafts/, tre takes more than one path, and `tre posts/ drafts/` is what
-    someone would really type. The command line above adapts, so with no
-    drafts the second root is never claimed.
-
-    Flat, unlike posts/, and that is not an inconsistency: _drafts/ really is
-    flat — Jekyll does not read subdirectories of it — and a draft has no
-    published taxonomy to file itself under yet.
-
-    Not links: a draft has no URL to go to. The mode bits carry the state the
-    way they did in the `ls -la` this replaced — `-rw-------` is the file
-    being unreadable by anyone but its owner, which is what an unpublished
-    post is.
-  {%- endcomment -%}
-  <p class="tre__root">drafts/</p>
-  <ul class="tre__lvl">
-    {%- for d in site.data.drafts -%}
-    {%- if forloop.last %}{% assign dbranch = "└── " %}{% else %}{% assign dbranch = "├── " %}{% endif -%}
-    <li>
-      <span class="tre__row tre__row--draft">
-        <span class="tre__g" aria-hidden="true">{{ dbranch }}</span>
-        <time class="tre__date" datetime="{{ d.date }}">{{ d.date }}</time>
-        {%- if d.category %}<span class="tre__cat">{{ d.category }}</span>{% endif -%}
-        <span class="tre__name">{{ d.title }}</span>
-        <span class="tre__mode" aria-hidden="true">-rw-------</span>
-      </span>
-    </li>
-    {%- endfor -%}
-  </ul>
-  {%- endif -%}
 </div>
