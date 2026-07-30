@@ -67,6 +67,18 @@
   --s7: 3.5rem;
   --s8: 5.5rem;
 
+  /* The height the sticky bar OCCUPIES, and the only number anchor offsets are
+   * allowed to be computed from — .prose headings here, and `.cl` line anchors
+   * in syntax.css, both do `calc(var(--bar-h) + 1.5rem)`. One tmux status row
+   * at rest; the narrow branch under the bar wraps it and raises this to match,
+   * because a bar that grew without it would hide the very heading it had just
+   * scrolled to.
+   *
+   * The height of ONE row is a separate quantity once the bar wraps, and it is
+   * deliberately NOT declared here: the bar reads `var(--bar-row, var(--bar-h))`
+   * so that at rest — and in card.css, which overrides --bar-h to 46px and
+   * takes .tmux across unedited — a row simply IS the bar, exactly as before.
+   * --bar-row appears only where the two stop being the same number. */
   --bar-h: 1.75rem;
 }
 
@@ -164,7 +176,13 @@ a:hover { text-decoration-thickness: 2px; }
  * specimen's ::after does, but ::after cannot be used here because this
  * element is a horizontal scroller (overflow-x below) and would clip a
  * pseudo-element placed under it, whereas an element's own box-shadow is
- * never clipped by its own overflow. */
+ * never clipped by its own overflow.
+ *
+ * The fade is stated as `calc(100% - 0.75rem)` rather than the 58% it used to
+ * be so that it stays a FADE AT THE BOTTOM EDGE at any bar height. At one row
+ * the two are the same 16px of opaque ground; at the two rows the narrow branch
+ * produces, 58% would have started fading halfway down the first row and left
+ * the window list on row two standing over scrolling prose. */
 .tmux {
   position: sticky;
   top: 0;
@@ -172,15 +190,26 @@ a:hover { text-decoration-thickness: 2px; }
   display: flex;
   align-items: stretch;
   gap: 0;
-  height: var(--bar-h);
-  background: linear-gradient(to bottom, var(--id-bg, #fbf1c7) 58%, transparent);
+  /* min-height, not height: the narrow branch lets this wrap, and a wrapped bar
+   * has to be as tall as the rows it actually grew. */
+  min-height: var(--bar-row, var(--bar-h));
+  background: linear-gradient(to bottom, var(--id-bg, #fbf1c7) calc(100% - 0.75rem), transparent);
   box-shadow: 0 0.35rem 0.45rem var(--id-bg, #fbf1c7);
   font-size: var(--fs-sm);
-  line-height: var(--bar-h);
+  line-height: var(--bar-row, var(--bar-h));
+  /* A11Y-03 — `scrollbar-width: none` is gone. Hiding the scrollbar on a
+   * scroller is only defensible while nothing can overflow, and the whole point
+   * of the wrap below is that on a phone nothing does. What remains here is a
+   * last resort for a width nobody predicted — a fifth window, a fallback face
+   * with a wider advance — and that is exactly the case where the reader needs
+   * to be told there is more. `thin` because the bar is 28px and a classic
+   * scrollbar would take half of it; the thumb is --id-dim, which is 3.24:1 on
+   * the ground — under AA for text, over the 3:1 that a non-text control needs.
+   * A scroller that fits still draws nothing, so at rest this costs no pixels. */
   overflow-x: auto;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--id-dim, #928374) transparent;
 }
-.tmux::-webkit-scrollbar { display: none; }
 
 /* FID-04 — `status-left "#[fg=dim] #S #[fg=pink]❯ "`. A dim session name and a
  * pink sigil on the bare band: no brackets, no fill. The name holds at
@@ -201,7 +230,14 @@ a:hover { text-decoration-thickness: 2px; }
   display: flex;
   gap: 0;
   flex: 1;
-  min-width: 0;
+  /* A11Y-03 — this was `min-width: 0`, and that was the bug. It let the list
+   * shrink below its own content, so the four links overflowed it and painted
+   * on top of the theme toggle at every width from 320px to ~460px: `4:about`
+   * and `light` occupied the same pixels and neither could be read or hit.
+   * A floor at max-content turns that into honest overflow — the bar scrolls,
+   * with the scrollbar restored above — and the narrow branch below removes
+   * even that by wrapping instead. */
+  min-width: max-content;
 }
 /* Inactive windows should be `fg=dim` to make room for the active one, and they
  * are not: --id-dim is 3.24:1 on the ground here and these are the site's only
@@ -268,11 +304,81 @@ body:has(#copymode:checked) .tmux__flag--mode { display: inline; }
   border: 0;
   color: var(--id-fg, #654735);
   padding: 0 0.7ch;
-  line-height: 1.4;
+  /* One status row, not 1.4. At 1.4 the button's box was 18px tall — under the
+   * 24px WCAG 2.5.8 minimum for a pointer target, on the one control in the bar
+   * that is not a link. A row's worth of line box gives it 28px and centres the
+   * label in it, and since the row height is unchanged nothing else moves. */
+  line-height: var(--bar-row, var(--bar-h));
 }
 .themebtn:hover {
   background: var(--id-panel, #e5d5ad);
   color: var(--id-fg-strong, #4f3829);
+}
+
+/* ---- A11Y-03: the narrow branch. The bar wraps instead of scrolling ----
+ * Measured, not estimated: the bar's natural width is 462px, or 478px with the
+ * copy-mode flag showing, against a 390px iPhone. `overflow-x: auto` was never
+ * saving it — see .tmux__windows above — and `scrollbar-width: none` meant
+ * there was no signal that anything was elsewhere.
+ *
+ * A narrow tmux status line wraps, so this one wraps: session + sigil + the
+ * right-hand side on row one, the window list on row two. The window list may
+ * wrap again inside its own row, so the layout never depends on four windows
+ * fitting side by side.
+ *
+ * THE BREAKPOINT IS IN em ON PURPOSE, and that is the answer to the "it might
+ * be three rows" caveat. Every width in this bar is rem- and ch-derived, so it
+ * scales with the reader's default font size — and a media query's `em` is that
+ * same default size, never this stylesheet's. A reader at 20px gets a 578px bar
+ * AND a 600px breakpoint, so the branch flips at the same relative place it
+ * does at 16px. A px breakpoint would have flipped too late for exactly the
+ * reader the caveat is about. 30em = 480px clears the 478px copy-mode width
+ * with room for a fallback face whose advance is wider than Maple Mono's 0.6em.
+ */
+@media (max-width: 30em) {
+  :root {
+    /* --bar-h is no longer one row here, so a row needs its own name. */
+    --bar-row: 1.75rem;
+    /* An UPPER BOUND on the rows the bar occupies — CSS cannot count flex
+     * lines, so this is asserted, not measured. Over-counting costs a heading
+     * 1.75rem of extra slack after an anchor jump and nothing else;
+     * under-counting puts the heading behind the bar. It errs upward. */
+    --bar-rows: 2;
+    --bar-h: calc(var(--bar-row) * var(--bar-rows));
+  }
+
+  .tmux { flex-wrap: wrap; }
+
+  /* flex-basis: 100% is what puts the window list on a line of its own — an
+   * item that wants the whole line can never share one — and `order` then moves
+   * it past the right-hand side so row one reads `embe221ed ❯ … theme`.
+   *
+   * ACCEPTED COST: tab order follows the DOM, so the four window links are
+   * reached before the theme button that is drawn on the row above them.
+   * Correcting it means reordering _includes/tmux-bar.html; for five controls
+   * inside one 3.5rem band this is the smaller harm than the layouts that keep
+   * DOM order, all of which spend a third row to do it.
+   *
+   * min-width goes back to 0 here: max-content is a floor, and a floor wider
+   * than the line it sits on would push the viewport sideways again. Alone on
+   * its line the list has somewhere to wrap to instead. */
+  .tmux__windows {
+    order: 1;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .tmux__right { margin-inline-start: auto; }
+}
+
+/* The window list measures ~19.1em on its own, so under that it wraps too and
+ * the bar is three rows. Declared at 20em rather than 19.1em: the extra 0.9em
+ * is the same slack the 30em above carries, spent in the direction that cannot
+ * hide a heading. Between 19.1em and 20em the bar really is two rows and an
+ * anchor lands 1.75rem lower than it had to — which is invisible, and is the
+ * trade this variable exists to make. */
+@media (max-width: 20em) {
+  :root { --bar-rows: 3; }
 }
 
 /* ============================================================
@@ -624,6 +730,11 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
   line-height: 1.25;
   color: var(--id-fg-strong, #4f3829);
   text-wrap: balance;
+  /* .tmux is sticky, so a heading scrolled to by the table of contents has to
+   * clear it. --bar-h is the bar's occupied height at THIS width, not a
+   * constant — it grows with the rows the bar wraps to on a phone. See the
+   * narrow branch in the status-bar section: keeping those two in step is the
+   * whole reason --bar-h is a variable and not the 1.75rem it reads as. */
   scroll-margin-block-start: calc(var(--bar-h) + 1.5rem);
 }
 .prose h2 {

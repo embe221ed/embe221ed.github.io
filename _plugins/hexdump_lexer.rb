@@ -62,7 +62,15 @@ module Rouge
       # non-colour channel, which is the reason the PWN-01 specimen shows
       # `0` / `_` / `·` there. All three are in the shipped Maple Mono.
       # Set to false to render the pane exactly as the tool printed it.
-      PANE_GLYPHS = true
+      #
+      # FALSE, and it has to be. The madcore post hands the reader a procedure —
+      # "`:%!xxd` inside nvim to edit it in a more human-friendly format" — and
+      # then shows the dump they are meant to be looking at. nvim prints `.`.
+      # Substituting `0`/`_`/`·` would make the page disagree with the tool it
+      # just told them to run, which is a worse failure than the missing channel
+      # the substitution was buying. Colour already distinguishes the four byte
+      # categories in both the hex column and the pane.
+      PANE_GLYPHS = false
       PLACEHOLDER = '.'
       GLYPH = { null: '0', space: '_', other: '·' }.freeze
 

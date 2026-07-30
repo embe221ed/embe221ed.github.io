@@ -1,0 +1,171 @@
+{%- comment -%}
+  REACH-01 — the Open Graph card, as a page.
+
+  Not a template for a rasteriser. This is a real 1200x630 document, served over
+  http and screenshotted by tools/og-cards.py, and it links the site's REAL
+  stylesheets and the site's REAL self-hosted Maple Mono. That is the entire
+  reason the card cannot drift from the site: there is no second copy of the
+  design to keep in sync. main.css draws the tmux bar and the pane; card.css
+  only changes the scale, because a card is read at a third of its size in a
+  Discord embed and the site's 17px body would land at 6px there.
+
+  No parent layout. `default.html` would drag in seo tag, the theme script, the
+  skip link and the footer, none of which mean anything to a screenshot.
+
+  ONE POLARITY, committed: gruvbox-material-light, forced with data-theme rather
+  than left to prefers-color-scheme. A PNG has no theme toggle, so it has to
+  pick, and light is what interdot last generated — assets/css/interdot-theme.css
+  names gruvbox-material-light as the active theme and carries the dark one as
+  the pair. The card is the site's public face; it should show what the author is
+  actually running. It is also the polarity every var() fallback in main.css
+  spells out, so if interdot-theme.css ever failed to load the card would come
+  out the same rather than half-themed.
+{%- endcomment -%}
+<!doctype html>
+<html lang="{{ site.lang | default: 'en' }}" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  {%- comment -%}
+    A rendering target, not content. sitemap.xml already skips these (the
+    generator sets sitemap:false); this covers the crawler that finds the URL
+    some other way, and stops a card page from competing with its own post.
+  {%- endcomment -%}
+  <meta name="robots" content="noindex, nofollow">
+  {%- comment -%}
+    Fixed width, not device-width: the screenshot runs at exactly 1200x630 and
+    the layout must not depend on the viewport it happens to get.
+  {%- endcomment -%}
+  <meta name="viewport" content="width=1200">
+  <title>{{ page.title }}</title>
+
+  <link rel="stylesheet" href="{{ '/assets/css/interdot-theme.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
+  {%- comment -%}
+    Last, so its @font-face redeclaration and its scale overrides win on source
+    order. See card.css for why both of those exist.
+  {%- endcomment -%}
+  <link rel="stylesheet" href="{{ '/assets/css/card.css' | relative_url }}">
+</head>
+<body class="card">
+
+{%- comment -%}
+  The post this card is for. Looked up by url, which the generator wrote into
+  page.post_url. Jekyll renders collections before pages (Site#render calls
+  render_docs then render_pages), so `post.content` here is the RENDERED html the
+  reader gets — which is what _includes/read-time.html has to be handed to count
+  prose and skip code.
+{%- endcomment -%}
+{%- assign post = site.posts | where: "url", page.post_url | first -%}
+
+{%- comment -%}
+  The tmux status bar, in the corrected form: `status-style bg=default` so the
+  band is the page ground with no fill, `status-left "#[fg=dim] #S #[fg=pink]❯ "`
+  so the session name is dim text and the sigil is a bare pink caret with no
+  chip and no brackets, and `window-status-current-style fg=pink,bold` so the
+  current window is coloured bold text with no inverse video. All of it comes
+  from main.css's own .tmux__* rules, so the card advertises the chrome the site
+  has rather than a snapshot of the chrome it used to have.
+
+  The window list is re-walked here rather than pulled in from
+  _includes/tmux-bar.html for one reason: that include computes the current
+  window from `page.url`, and this page's url is /cards/<slug>/, which matches no
+  window at all — the card would ship a bar with nothing current. The match runs
+  against the POST's url, so a card for a writeup shows `2:writeups` active, the
+  same window a reader who follows the link lands in. Indices are forloop.index
+  for the same reason the include uses it: `base-index 1` plus
+  `renumber-windows on` makes a window number positional, so writing one down
+  would make it a lie the moment a row moves in _data/windows.yml.
+
+  Spans, not links. A PNG has nothing to click.
+{%- endcomment -%}
+<div class="tmux card__bar">
+  <span class="tmux__session">{{ site.author.name }}</span>
+  <span class="tmux__sigil">❯</span>
+
+  <div class="tmux__windows">
+    {%- for w in site.data.windows -%}
+      {%- assign cur = false -%}
+      {%- if w.exact -%}
+        {%- if post.url == w.url -%}{%- assign cur = true -%}{%- endif -%}
+      {%- else -%}
+        {%- for path in w.paths -%}
+          {%- if post.url contains path -%}{%- assign cur = true -%}{%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+    <span class="tmux__win"{% if cur %} aria-current="page"{% endif %}>{{ forloop.index }}:{{ w.name }}</span>
+    {%- endfor -%}
+  </div>
+</div>
+
+{%- comment -%}
+  One pane, and it is the active one — .panes > .pane:first-child is what
+  main.css already treats as active at rest, so the pink border and pink title
+  are the site's own rule rather than a colour set here. A tmux session with one
+  pane has that pane focused; anything else would be a lie about the shot.
+{%- endcomment -%}
+<div class="panes card__panes">
+  <section class="pane card__pane">
+
+    {%- comment -%}
+      pane-border-format, `#{user}@#{host_short}:#{pane_current_path}`. The path
+      half is character-for-character the breadcrumb post.html draws and the
+      title chal-card.html draws, so all three name the same directory.
+    {%- endcomment -%}
+    <span class="pane__title">{{ site.author.name }}@blog:~/posts/{{ post.date | date: "%Y" }}/{{ post.title | slugify }}</span>
+
+    <div class="card__body">
+      {%- comment -%}
+        Three size steps rather than one, chosen on title length. A single fixed
+        size either wastes the pane on `madcore` (7 characters) or overflows it
+        on a challenge name with a subtitle. Monospace makes the character count
+        an exact predictor of the rendered width, which is the one place a
+        fixed-advance face pays for itself here.
+      {%- endcomment -%}
+      {%- assign tl = post.title | size -%}
+      {%- assign step = "" -%}
+      {%- if tl > 54 -%}{%- assign step = " card__title--xs" -%}
+      {%- elsif tl > 30 -%}{%- assign step = " card__title--sm" -%}
+      {%- endif -%}
+      <h1 class="card__title{{ step }}">{{ post.title }}</h1>
+    </div>
+
+    {%- comment -%}
+      The metadata row the reader sees under the title on the post itself, same
+      order and same separator: date · category · tags · read time. Plain spans,
+      since the links have nowhere to go — the colours still split them the way
+      .post__meta does, category and tags in accent2.
+    {%- endcomment -%}
+    {%- capture readtime %}{% include read-time.html content=post.content %}{% endcapture -%}
+    <div class="card__meta">
+      <span class="card__facts">
+        <span>{{ post.date | date: "%Y-%m-%d" }}</span>
+        {%- if post.categories.first %}
+        <span aria-hidden="true">·</span>
+        <span class="card__cat">{{ post.categories.first }}</span>
+        {%- endif %}
+        {%- if post.tags.size > 0 %}
+        <span aria-hidden="true">·</span>
+        <span class="card__tags">
+          {%- for tag in post.tags %}
+          <span>{{ tag }}</span>
+          {%- endfor %}
+        </span>
+        {%- endif %}
+        <span aria-hidden="true">·</span>
+        <span>{{ readtime | strip }} min</span>
+      </span>
+
+      {%- comment -%}
+        Where this came from. og:site_name covers it in a Discord embed and
+        nowhere else — a card saved, reposted or screenshotted travels without
+        any of its meta tags, and then this line is the only attribution left on
+        it. Derived from site.url so it cannot disagree with the canonical host.
+      {%- endcomment -%}
+      <span class="card__origin">{{ site.url | split: "//" | last }}</span>
+    </div>
+
+  </section>
+</div>
+
+</body>
+</html>

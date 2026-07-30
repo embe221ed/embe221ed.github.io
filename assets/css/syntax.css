@@ -473,6 +473,19 @@ pre.lineno::-moz-selection,
   user-select: none;
 }
 
+/* ...except in a hexdump, where the offset column is NOT a prompt.
+   `.gp` carries the `00000d60:` offsets, and the same post tells the reader to
+   run `:%!xxd -r` to write the file back — which needs those offsets. Copying a
+   dump and silently losing its addresses gives them something xxd cannot
+   reverse. The unselectable-prompt reasoning is right for `$ ls -la` and wrong
+   here, so it is re-asserted for the three hexdump aliases only. */
+div:is(.language-hexdump, .language-xxd, .language-hexyl) .highlight .gp {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
 /* --- diffs ---------------------------------------------------------------- */
 .highlight .gd { /* Generic.Deleted */
   color: var(--id-danger, #b43e3e);

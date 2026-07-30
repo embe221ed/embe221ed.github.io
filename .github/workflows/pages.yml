@@ -44,6 +44,31 @@ jobs:
         env:
           JEKYLL_ENV: production
 
+      # REACH-01. Screenshots _site/cards/<slug>/ into _site/assets/og/<slug>.png,
+      # which is what the og:image jekyll-seo-tag now emits points at. Must sit
+      # between the build and the upload: the pages it shoots do not exist before
+      # the build, and the PNGs it writes have to be inside _site before the
+      # artifact is packed.
+      #
+      # No setup step above it on purpose. ubuntu-latest already has Google
+      # Chrome and python3, and the script needs nothing else — no npm, no Node,
+      # no gem. It searches $CHROME_BIN, then google-chrome, google-chrome-stable,
+      # chromium, chromium-browser, and fails with an explicit message naming all
+      # of them if the runner image ever drops the browser.
+      #
+      # THIS STEP IS ALLOWED TO FAIL THE DEPLOY, and that is the point. It
+      # asserts that every og:image the built HTML advertises exists as a real
+      # non-empty 1200x630 PNG, and that the card really rendered in Maple Mono
+      # rather than in a system fallback. A writeup shipped with a 404ing
+      # og:image embeds worse in Discord than one with no og:image at all, so a
+      # red deploy is the cheaper failure by a distance.
+      - name: Render and verify OG cards
+        run: python3 tools/og-cards.py
+        # A browser that hangs instead of exiting is the classic way this kind of
+        # step wastes a runner. Five minutes is ~30x the measured time for one
+        # card end to end.
+        timeout-minutes: 5
+
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site

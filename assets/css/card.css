@@ -1,0 +1,186 @@
+/* card.css — REACH-01, the 1200x630 Open Graph card.
+ *
+ * Loaded ONLY by _layouts/card.html, after interdot-theme.css and main.css, and
+ * never by a page a reader visits. It is deliberately small: main.css already
+ * draws the tmux bar and the pane, and every one of those rules is reused here
+ * rather than restated. What is left is the two things a raster genuinely needs
+ * that a web page does not — a fixed canvas, and a scale that survives being
+ * looked at in a Discord embed at roughly a third of its size.
+ *
+ * Colours come from the same generated roles as the rest of the site, with the
+ * same LIGHT literal fallbacks. Nothing readable on this card is drawn in
+ * --id-dim (3.24:1) or --id-faint (2.21:1); the floor is --id-muted at 5.01:1.
+ * The one --id-dim left on the card is main.css's window separator, which is a
+ * `content: "│ " / ""` pseudo-element with an empty alt precisely because it
+ * carries no information — at thumbnail size it drops into the ground, which is
+ * what a divider is for.
+ */
+
+/* ============================================================
+   FONT — the same three files main.css serves, redeclared for
+   one descriptor only: font-display.
+   ============================================================ */
+/* main.css ships `font-display: swap`, which is right for a reader — text
+ * arrives immediately in a fallback and reflows when Maple Mono lands. For a
+ * SCREENSHOT it is the one setting that can silently produce a wrong card: if
+ * the shot is taken during the swap period, the PNG is the site's design set in
+ * DejaVu Sans Mono, and nothing about the file says so. `block` inverts the
+ * default — the browser paints no text at all until the face is available, so a
+ * font that failed to load produces a blank card rather than a plausible lie.
+ *
+ * These are later rules with identical descriptors, so they win over main.css's.
+ * The src URLs are duplicated, which is a drift risk; it is covered rather than
+ * argued with — tools/og-cards.py renders every card a second time with remote
+ * fonts disabled and fails the build unless the two PNGs differ, so a card set
+ * in a fallback face cannot reach the artifact whatever the reason. */
+@font-face {
+  font-family: "Maple Mono";
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url("/assets/fonts/MapleMono-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Maple Mono";
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url("/assets/fonts/MapleMono-Bold.woff2") format("woff2");
+}
+
+/* ============================================================
+   CANVAS
+   ============================================================ */
+/* Exactly the window Chrome is given, so the screenshot is 1:1 with the layout
+ * and og:image:width/height are the truth rather than a rounding of it. */
+.card {
+  width: 1200px;
+  height: 630px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  /* The site's scale is rem-based and tuned for a reader at arm's length; this
+   * one is px-based and tuned for a 400px-wide embed. Overriding the custom
+   * properties rather than the rules that read them is what lets main.css's
+   * .tmux and .pane come across unedited: they ask for --fs-sm and --bar-h and
+   * get the card's answer. */
+  --fs: 22px;
+  --fs-sm: 21px;
+  --fs-md: 24px;
+  --bar-h: 46px;
+}
+
+/* ============================================================
+   STATUS BAR
+   ============================================================ */
+/* main.css makes the bar sticky and hangs a scrim under it so prose can scroll
+ * beneath. Nothing scrolls here and the scrim is the ground colour over the
+ * ground colour, so both are left alone rather than unset — the card should
+ * differ from the site in scale and in nothing else.
+ *
+ * The only addition is the outer inset. In the terminal the status line starts
+ * at column 0 because the terminal edge is the screen edge; on a card the PNG
+ * edge is a hard crop, and 0.8ch of padding puts the session name 10px from it. */
+.card__bar {
+  flex: none;
+  padding-inline: 1.1rem;
+}
+
+/* ============================================================
+   PANE
+   ============================================================ */
+.card__panes {
+  flex: 1;
+  min-height: 0;
+  /* Room for the title sitting in the punched gap on the top border, and a
+   * symmetric margin on the other three sides. */
+  margin: 1.4rem 2.1rem 2.1rem;
+}
+
+.card__pane {
+  display: flex;
+  flex-direction: column;
+  /* Longhand, so it replaces .pane's rem padding outright. Wider than the
+   * site's pane because the type inside is three times the size. */
+  padding: 2.75rem 2.5rem 2.1rem;
+}
+
+/* ============================================================
+   TITLE
+   ============================================================ */
+/* Centred in whatever the metadata row leaves, so a one-word challenge name and
+ * a three-line one both sit balanced instead of hanging off the top border. */
+.card__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+}
+
+.card__title {
+  margin: 0;
+  font-size: 4.5rem;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--id-fg-strong, #4f3829);
+  /* Wrapping is even rather than ragged, and a fourth line is a design error
+   * rather than something to render badly: the size steps below are chosen so
+   * three lines is the worst case at any plausible title length. */
+  text-wrap: balance;
+  overflow: hidden;
+}
+/* Maple Mono is fixed-advance at ~0.6em, and the pane's inner width is 1050px,
+ * so a step is just a division: 24 characters per line at 4.5rem, 31 at 3.5rem,
+ * 39 at 2.75rem. The thresholds in card.html are those numbers doubled, less a
+ * little for the word breaks. */
+.card__title--sm { font-size: 3.5rem; }
+.card__title--xs { font-size: 2.75rem; }
+
+/* ============================================================
+   METADATA
+   ============================================================ */
+/* 1.375rem is not a taste decision, it is the largest size at which the whole
+ * row fits on one line: 44 characters of metadata plus 18 of hostname plus nine
+ * 1.5ch gaps is 1003px inside a 1050px pane. A step up wraps `· 10 min` onto a
+ * second line under the hostname, which reads as a mistake. nowrap here so that
+ * if a future post does overflow, the metadata wraps inside .card__facts and the
+ * attribution stays put on the right rather than being shoved down. */
+.card__meta {
+  flex: none;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 2ch;
+  font-size: 1.375rem;
+  color: var(--id-muted, #6b665f);
+}
+
+/* Same 1.5ch gap and same order as .post__meta on the article itself. */
+.card__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.5ch;
+  min-width: 0;
+}
+
+/* .post__meta paints its links in accent2 (4.91:1 on the ground). The card has
+ * no links, but the taxonomy still has to separate itself from the date and the
+ * read time, and inventing a second colour for that would put a hue on the card
+ * that the post does not use. */
+.card__cat,
+.card__tags > span {
+  color: var(--id-accent2, #a65009);
+}
+.card__tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 1.5ch;
+}
+
+.card__origin {
+  flex: none;
+  white-space: nowrap;
+}

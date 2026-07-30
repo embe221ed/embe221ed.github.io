@@ -88,3 +88,7 @@ exclude:
   - vendor
   - README.md
   - .ruby-version
+  # Build tooling, not content. Without this Jekyll copies the directory
+  # verbatim and https://blog.embe221ed.dev/tools/og-cards.py becomes a real,
+  # crawlable, sitemap-listed URL.
+  - tools
