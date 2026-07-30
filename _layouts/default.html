@@ -27,6 +27,10 @@
   <script>
     (function () {
       try {
+        /* Only an explicit override is applied. No key, or "auto", or anything
+           unrecognised, leaves the attribute off — which is what lets the
+           stylesheet's prefers-color-scheme block decide. Getting this wrong
+           in the other direction is what made auto unreachable before. */
         var t = localStorage.getItem("theme");
         if (t === "light" || t === "dark") {
           document.documentElement.setAttribute("data-theme", t);
