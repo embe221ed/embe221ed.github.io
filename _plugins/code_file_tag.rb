@@ -22,7 +22,7 @@
 #     > div.highlight > pre.highlight > code
 #
 # — so every rule in assets/css/syntax.css applies unchanged, and the line
-# wrapper in _plugins/code_lines.rb picks these blocks up too. The download
+# same structure kramdown emits, so every syntax.css rule applies. The download
 # line is a sibling of that div, not inside it, so the framed code block is
 # untouched; it degrades to a plain link and a size when unstyled.
 #
@@ -82,7 +82,6 @@ module Interdot
 
       # One line, no newlines between the tags: kramdown passes a block-level
       # raw HTML element through untouched, and the div.highlight regex in
-      # _plugins/code_lines.rb matches this exact nesting.
       %(<div class="code-file">) +
         %(<div class="language-#{lexer.tag} highlighter-rouge">) +
         %(<div class="highlight"><pre class="highlight"><code>#{code}</code></pre></div>) +

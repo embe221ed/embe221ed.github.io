@@ -16,7 +16,12 @@
   url: /
   exact: true
 
-- name: writeups
+# The window is named for what it opens, not for what the site mostly contains:
+# it runs `choose-tree` over the categories, and one of those categories happens
+# to be `writeup`. Calling it `writeups` promised a post list and delivered a
+# chooser. /archives/ is the post list, and it is linked from the footer and the
+# homepage.
+- name: categories
   url: /categories/
   paths: ["/posts/", "/categories/", "/archives/"]
 

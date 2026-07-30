@@ -12,17 +12,7 @@ layout: default
 {%- endcomment -%}
 <article class="wrap-wide surface-read">
 
-  {%- comment -%}
-    pane_in_mode, for the web. Visually hidden but focusable, and it has to stay
-    a sibling BEFORE .prose: main.css turns the gutter on with
-    `#copymode:checked ~ .prose`, and reveals the ▲ flag in the status bar with
-    `body:has(#copymode:checked)` because the bar is rendered before <main>.
-    Never display:none — that would drop it out of the tab order and the label
-    would have nothing to operate.
-  {%- endcomment -%}
-  <input class="vh" type="checkbox" id="copymode">
-
- <div class="post__head">
+   <div class="post__head">
 
   <a class="bridge" href="{{ '/' | relative_url }}">~/posts/{{ page.date | date: "%Y" }}/{{ page.title | slugify }}</a>
 
@@ -84,15 +74,6 @@ layout: default
     </details>
   </section>
   {%- endif %}
-
-  {%- comment -%}
-    `prefix [` is the author's own binding for copy mode, so the mnemonic is
-    the real one. It sits last in the head, directly above the code it acts on.
-  {%- endcomment -%}
-  <p class="post__tools">
-    <label class="keyhint" for="copymode"><span class="keyhint__mn" aria-hidden="true">[</span> copy mode</label>
-  </p>
-
  </div>
 
   <div class="prose">

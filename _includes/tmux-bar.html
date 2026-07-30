@@ -41,17 +41,6 @@
   </nav>
 
   <div class="tmux__right">
-    {%- comment -%}
-      The real status-right is transient flags only, each drawn just when its
-      format is true: `#{?pane_in_mode,#[fg=pink]▲ ,}`. pane_in_mode on the web
-      is the #copymode checkbox in post.html, which sits inside <main> — after
-      this bar in the document — so main.css reveals the flag with
-      `body:has(#copymode:checked)` and keeps it display:none otherwise,
-      matching a tmux format that evaluates to the empty string.
-      ▲ U+25B2 is present in the shipped font; the nerd-font flags are not.
-    {%- endcomment -%}
-    <span class="tmux__flag tmux__flag--mode" aria-hidden="true">▲</span>
-
     <button type="button" class="themebtn" data-theme-toggle
             aria-label="Theme mode: follow device, light, or dark">
       <span data-theme-label>theme</span>

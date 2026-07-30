@@ -912,5 +912,12 @@ and on remote:
 $  
 ```
 
+### the full exploit
+
+Everything above, assembled. The coredump offsets are the ones my own core
+happened to have — regenerate it and they move.
+
+{% code_file exploits/madcore/exploit.py %}
+
 [googlectf]:    https://capturetheflag.withgoogle.com/challenges/pwn-madcore
 [madcore_zip]:  https://embe221ed.dev/files/CTFs/GoogleCTF/2022/pwn/madcore/madcore.zip
