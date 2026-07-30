@@ -5,12 +5,24 @@ layout: default
   Surface 1: full terminal. Laid out as tmux splits — one pane per component,
   titles drawn on the top border in the author's real pane-border-format
   (#{user}@#{host_short}:path), exactly one pane active at a time.
+
+  THREE PANES IN ONE GRID, not a pane above a nested split. The index runs
+  `tre posts/` three levels deep and its rows carry a date, a title and the
+  tags; at the old 1.55fr share that row had 51 characters to live in and the
+  guides alone took 12. It now spans the full width — measured at 88 — and the
+  theme picker, whose longest row is a 22-character theme name, takes the
+  narrow column beside the hero instead of an equal half.
+
+  DOM order is hero, index, picker. The grid areas below put the picker up on
+  the first row visually, but the source order is the reading order, which is
+  also what the single-column layout falls back to under 56rem: on a phone the
+  post index comes before the theme picker, where it belongs.
 {%- endcomment -%}
 <div class="wrap-wide surface-term">
 
-  <div class="panes">
+  <div class="panes panes--home">
 
-    <section class="pane">
+    <section class="pane pane--hero">
       <span class="pane__title">{{ site.author.name }}@blog:~</span>
       {%- comment -%}
         The working copy is dirty exactly when _data/drafts.yml has rows in it:
@@ -49,70 +61,65 @@ layout: default
       </p>
     </section>
 
-    <div class="panes panes--split">
+    <section class="pane pane--index">
+      {%- comment -%}
+        The cwd is home, not ~/writeups: the pane lists everything published,
+        and `writeups` framed the whole site as one category of post. The
+        command adapts, picking up `drafts/` as a second root only when there
+        is something in it.
+      {%- endcomment -%}
+      <span class="pane__title">{{ site.author.name }}@blog:~</span>
+      {%- capture tre_said %}tre posts/{% if site.data.drafts.size > 0 %} drafts/{% endif %}{% endcapture -%}
+      <h2 class="ps1 ps1--pane">
+        {%- include ps1.html dir="~" said=tre_said -%}
+      </h2>
+      {%- include tre-posts.html -%}
+      {%- comment -%}
+        /archives/ is an indexed URL on the live site. Without a link from the
+        one surface that lists posts it would be reachable from the sitemap and
+        nowhere else, which is how it got dropped in the first place.
+      {%- endcomment -%}
+      <p class="term-note">
+        <a href="{{ '/archives/' | relative_url }}">ls -R ~/posts</a>
+      </p>
+    </section>
 
-      <section class="pane">
-        {%- comment -%}
-          The cwd is home, not ~/writeups: the pane lists everything published,
-          and `writeups` framed the whole site as one category of post. `tree`
-          rather than `ls -la` because posts are grouped by year on disk and a
-          flat listing threw that away — and because the command adapts, picking
-          up `drafts/` as a second root only when there is something in it.
-        {%- endcomment -%}
-        <span class="pane__title">{{ site.author.name }}@blog:~</span>
-        {%- capture tree_said %}tree posts/{% if site.data.drafts.size > 0 %} drafts/{% endif %}{% endcapture -%}
-        <h2 class="ps1 ps1--pane">
-          {%- include ps1.html dir="~" said=tree_said -%}
-        </h2>
-        {%- include tree-posts.html -%}
-        {%- comment -%}
-          /archives/ is an indexed URL on the live site. Without a link from the
-          one surface that lists posts it would be reachable from the sitemap and
-          nowhere else, which is how it got dropped in the first place.
-        {%- endcomment -%}
-        <p class="term-note">
-          <a href="{{ '/archives/' | relative_url }}">ls -R ~/posts</a>
-        </p>
-      </section>
-
-      <section class="pane">
-        <span class="pane__title">{{ site.author.name }}@blog:~/.config/interdot</span>
-        <h2 class="ps1 ps1--pane">
-          {%- include ps1.html dir="interdot" said="interdot list" -%}
-        </h2>
-        <p class="picker__cmd">themes (* = what I'm running)</p>
-        <ul class="picker">
-          <li>
-            <button type="button" class="picker__row" data-theme-option="gruvbox-material-light"
-                    data-set-theme="light">
-              <span class="picker__star" aria-hidden="true"></span>
-              <span>gruvbox-material-light</span>
-            </button>
-          </li>
-          <li>
-            <button type="button" class="picker__row" data-theme-option="gruvbox-material-dark"
-                    data-set-theme="dark">
-              <span class="picker__star" aria-hidden="true"></span>
-              <span>gruvbox-material-dark</span>
-            </button>
-          </li>
-          {%- for t in site.data.themes %}
-          <li>
-            <button type="button" class="picker__row" disabled
-                    title="Defined in interdotensional; not yet generated for the web.">
-              <span class="picker__star" aria-hidden="true"></span>
-              <span>{{ t }}</span>
-            </button>
-          </li>
-          {%- endfor %}
-        </ul>
-        <p class="term-note">
-          Same palette that themes my nvim, tmux and zsh, generated from the
-          same source.
-        </p>
-      </section>
-
-    </div>
+    <section class="pane pane--themes">
+      <span class="pane__title">{{ site.author.name }}@blog:~/.config/interdot</span>
+      <h2 class="ps1 ps1--pane">
+        {%- include ps1.html dir="interdot" said="interdot list" -%}
+      </h2>
+      <p class="picker__cmd">themes (* = what I'm running)</p>
+      <ul class="picker">
+        <li>
+          <button type="button" class="picker__row" data-theme-option="gruvbox-material-light"
+                  data-set-theme="light">
+            <span class="picker__star" aria-hidden="true"></span>
+            <span>gruvbox-material-light</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="picker__row" data-theme-option="gruvbox-material-dark"
+                  data-set-theme="dark">
+            <span class="picker__star" aria-hidden="true"></span>
+            <span>gruvbox-material-dark</span>
+          </button>
+        </li>
+        {%- for t in site.data.themes %}
+        <li>
+          <button type="button" class="picker__row" disabled
+                  title="Defined in interdotensional; not yet generated for the web.">
+            <span class="picker__star" aria-hidden="true"></span>
+            <span>{{ t }}</span>
+          </button>
+        </li>
+        {%- endfor %}
+      </ul>
+      <p class="term-note">
+        Same palette that themes my nvim, tmux and zsh, generated from the
+        same source.
+      </p>
+    </section>
 
   </div>
 </div>

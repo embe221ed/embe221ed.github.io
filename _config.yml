@@ -13,6 +13,14 @@ author:
   name: embe221ed
   team: justCatTheFish
 
+# tmux status-left prints the SESSION name, and a session is named after the
+# thing being worked on — `tmux new -s blog`. It is not the user: author.name
+# is the user, and it appears in the pane titles as the `user` half of
+# user@host. Both were reading author.name, which put the wrong noun in the
+# status bar.
+tmux:
+  session: blog
+
 github:
   username: embe221ed
 twitter:

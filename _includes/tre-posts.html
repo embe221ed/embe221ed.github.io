@@ -1,0 +1,161 @@
+{%- comment -%}
+  `tre posts/` — the homepage index.
+
+  tre (dduan/tre), not GNU tree. Checked against the source rather than
+  guessed, because the two differ in exactly the place this include ends:
+
+    * prefixes are identical — "├── ", "└── ", "│   " and four spaces, from
+      diagram_formatting.rs, so the guides below are the real strings;
+    * the root prints as the literal argument with an empty prefix, which is
+      why the first line is `posts/` and not `posts`;
+    * tre prints NO trailing summary. GNU tree's "N directories, M files" was
+      here and is gone — src/output.rs emits entry lines and nothing else.
+
+  Each row carries its COMPLETE prefix rather than relying on nesting, which
+  is what tre itself prints and what keeps a row intact when it is copied on
+  its own. The guides are aria-hidden: the shape is a picture of a hierarchy
+  the nested lists already state, and each row's link carries a full label.
+
+  Box Drawing is 100% covered by the shipped Maple Mono — verified against
+  the woff2 — so these are the real characters, not a CSS imitation.
+
+  THE HIERARCHY IS THE SITE'S TAXONOMY, NOT THE SOURCE TREE. _posts/ is flat
+  on disk; Jekyll requires it. Category and year are the two axes the site
+  already indexes by (/categories/:name/ exists and is linked from here), so
+  this is the directory layout the taxonomy describes rather than a claim
+  about what ls would show. The alternative — a flat list — spent the depth
+  on nothing and left no room for the tags.
+
+  The leaf date is MM-DD because the year directly above it is the year. The
+  full date is in the row's aria-label and in <time datetime>, so nothing is
+  lost to a reader who cannot see the parent line.
+
+    posts/
+    └── writeup
+        └── 2022
+            └── 07-15  madcore  [pwn binexp googlectf]
+{%- endcomment -%}
+
+{%- comment -%}
+  categories.size rather than a truthiness test on .first: Jekyll always
+  gives a post a categories array, so this is a count and never a nil.
+{%- endcomment -%}
+{%- assign filed = site.posts | where_exp: "p", "p.categories.size > 0" -%}
+{%- assign unfiled = site.posts | where_exp: "p", "p.categories.size == 0" -%}
+{%- assign dirs = filed | group_by_exp: "p", "p.categories.first" | sort: "name" -%}
+{%- assign ndirs = dirs | size -%}
+{%- assign nunfiled = unfiled | size -%}
+{%- assign ndrafts = site.data.drafts | size -%}
+
+<div class="tre">
+  <p class="tre__root">posts/</p>
+  <ul class="tre__lvl">
+
+    {%- for cat in dirs -%}
+    {%- comment -%}
+      A category is the last child of posts/ only when nothing follows it —
+      and an uncategorised post would. Getting this wrong draws └── with rows
+      still hanging under it.
+    {%- endcomment -%}
+    {%- assign catlast = false -%}
+    {%- if forloop.last and nunfiled == 0 %}{% assign catlast = true %}{% endif -%}
+    {%- if catlast -%}
+      {%- assign cbranch = "└── " -%}{%- assign ccarry = "    " -%}
+    {%- else -%}
+      {%- assign cbranch = "├── " -%}{%- assign ccarry = "│   " -%}
+    {%- endif -%}
+    <li>
+      {%- comment -%}
+        The directory is a link because it is one: jekyll-archives builds
+        /categories/:name/ from the slugified name (_config.yml). Clicking a
+        directory to descend into it is the one interaction a tree implies.
+      {%- endcomment -%}
+      {%- assign catslug = cat.name | slugify -%}
+      <span class="tre__g" aria-hidden="true">{{ cbranch }}</span><a class="tre__dir" href="{{ '/categories/' | append: catslug | append: '/' | relative_url }}">{{ cat.name }}</a>
+      <ul class="tre__lvl">
+        {%- assign years = cat.items | group_by_exp: "p", "p.date | date: '%Y'" -%}
+        {%- for y in years -%}
+        {%- if forloop.last -%}
+          {%- assign ybranch = "└── " -%}{%- assign ycarry = "    " -%}
+        {%- else -%}
+          {%- assign ybranch = "├── " -%}{%- assign ycarry = "│   " -%}
+        {%- endif -%}
+        <li>
+          <span class="tre__g" aria-hidden="true">{{ ccarry }}{{ ybranch }}</span><span class="tre__dir">{{ y.name }}</span>
+          <ul class="tre__lvl">
+            {%- for post in y.items -%}
+            {%- if forloop.last %}{% assign pbranch = "└── " %}{% else %}{% assign pbranch = "├── " %}{% endif -%}
+            <li>
+              <a class="tre__row" href="{{ post.url | relative_url }}"
+                 aria-label="{{ post.title }} — {{ cat.name }}, {{ post.date | date: '%-d %B %Y' }}{% if post.tags.size > 0 %}, tagged {{ post.tags | join: ', ' }}{% endif %}">
+                <span class="tre__g" aria-hidden="true">{{ ccarry }}{{ ycarry }}{{ pbranch }}</span>
+                <time class="tre__date" datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%m-%d" }}</time>
+                <span class="tre__name">{{ post.title }}</span>
+                {%- if post.tags.size > 0 %}<span class="tre__tags" aria-hidden="true">[{{ post.tags | join: " " }}]</span>{% endif -%}
+              </a>
+            </li>
+            {%- endfor -%}
+          </ul>
+        </li>
+        {%- endfor -%}
+      </ul>
+    </li>
+    {%- endfor -%}
+
+    {%- comment -%}
+      A post with no category has no directory to sit in, so it sits at the
+      root, which is where an unfiled file actually is. It keeps the full
+      date: there is no year line above it to supply the year.
+
+      None exist today. It is here so that forgetting `categories:` in some
+      future front matter costs a tidy hierarchy and not a post that silently
+      never appears on the front page.
+    {%- endcomment -%}
+    {%- for post in unfiled -%}
+    {%- if forloop.last %}{% assign ubranch = "└── " %}{% else %}{% assign ubranch = "├── " %}{% endif -%}
+    <li>
+      <a class="tre__row" href="{{ post.url | relative_url }}"
+         aria-label="{{ post.title }} — {{ post.date | date: '%-d %B %Y' }}{% if post.tags.size > 0 %}, tagged {{ post.tags | join: ', ' }}{% endif %}">
+        <span class="tre__g" aria-hidden="true">{{ ubranch }}</span>
+        <time class="tre__date" datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%Y-%m-%d" }}</time>
+        <span class="tre__name">{{ post.title }}</span>
+        {%- if post.tags.size > 0 %}<span class="tre__tags" aria-hidden="true">[{{ post.tags | join: " " }}]</span>{% endif -%}
+      </a>
+    </li>
+    {%- endfor -%}
+
+  </ul>
+
+  {%- if ndrafts > 0 -%}
+  {%- comment -%}
+    Drafts are a second root, not a branch of the first: they live in
+    _drafts/, tre takes more than one path, and `tre posts/ drafts/` is what
+    someone would really type. The command line above adapts, so with no
+    drafts the second root is never claimed.
+
+    Flat, unlike posts/, and that is not an inconsistency: _drafts/ really is
+    flat — Jekyll does not read subdirectories of it — and a draft has no
+    published taxonomy to file itself under yet.
+
+    Not links: a draft has no URL to go to. The mode bits carry the state the
+    way they did in the `ls -la` this replaced — `-rw-------` is the file
+    being unreadable by anyone but its owner, which is what an unpublished
+    post is.
+  {%- endcomment -%}
+  <p class="tre__root">drafts/</p>
+  <ul class="tre__lvl">
+    {%- for d in site.data.drafts -%}
+    {%- if forloop.last %}{% assign dbranch = "└── " %}{% else %}{% assign dbranch = "├── " %}{% endif -%}
+    <li>
+      <span class="tre__row tre__row--draft">
+        <span class="tre__g" aria-hidden="true">{{ dbranch }}</span>
+        <time class="tre__date" datetime="{{ d.date }}">{{ d.date }}</time>
+        {%- if d.category %}<span class="tre__cat">{{ d.category }}</span>{% endif -%}
+        <span class="tre__name">{{ d.title }}</span>
+        <span class="tre__mode" aria-hidden="true">-rw-------</span>
+      </span>
+    </li>
+    {%- endfor -%}
+  </ul>
+  {%- endif -%}
+</div>

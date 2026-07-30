@@ -417,6 +417,33 @@ a:hover { text-decoration-thickness: 2px; }
     grid-template-columns: 1.55fr 1fr;
     align-items: start;
   }
+
+  /* The homepage. `tre posts/` is three levels deep and its rows carry a date,
+     a title and the tags, so the index gets a whole row to itself: at an equal
+     half it had 51 characters and the guides alone took 12.
+
+     The picker's column is sized by its content, not by a fraction of the page.
+     A fraction let `gruvbox-material-light` wrap onto two lines, which doubled
+     the picker's height, and since panes in a tmux row are always the same
+     height that stretched the hero into a mostly empty box.
+
+     fit-content() rather than `auto`, because `auto` takes the max-content of
+     everything in the pane — and the note underneath the list is a sentence,
+     which as one unwrapped line claimed 83 characters of the row. The cap is
+     the width of the list itself; the sentence wraps inside it. The index
+     spans the row below either way, so it keeps the full width regardless.
+
+     Areas, not source order: the markup runs hero, index, picker, which is
+     the reading order and the order this falls back to below 56rem. */
+  .panes--home {
+    grid-template-columns: minmax(0, 1fr) fit-content(30ch);
+    grid-template-areas:
+      "hero  themes"
+      "index index";
+  }
+  .pane--hero   { grid-area: hero; }
+  .pane--themes { grid-area: themes; }
+  .pane--index  { grid-area: index; }
 }
 
 .pane {
@@ -449,14 +476,14 @@ a:hover { text-decoration-thickness: 2px; }
 /* tmux always has exactly one active pane. The first is active until the
    reader's pointer or keyboard focus moves to another one.
 
-   `:not(.panes .panes)` is what keeps that promise: home.html nests a
-   .panes--split inside .panes, and an unscoped rule matched the first child of
-   BOTH containers — two pink panes at rest, in a component whose whole claim is
-   that there is exactly one. Only the outermost container may nominate a
-   resting active pane. The accepted trade: a pane that is first inside a split
-   can never be the resting one, so on the homepage `~/writeups` stays dim until
-   it is hovered or focused. Hover and focus themselves are unscoped, since
-   those really are one-at-a-time. */
+   `:not(.panes .panes)` is what keeps that promise: a nested .panes would
+   otherwise let an unscoped rule match the first child of BOTH containers —
+   two pink panes at rest, in a component whose whole claim is that there is
+   exactly one. Only the outermost container may nominate a resting active
+   pane, and a pane that is first inside a nested one can never be it. The
+   homepage no longer nests (it is a single .panes--home grid), so its resting
+   active pane is the hero. Hover and focus are unscoped, since those really
+   are one-at-a-time. */
 .panes:not(.panes .panes):not(:has(.pane:hover, .pane:focus-within)) > .pane:first-child,
 .pane:hover,
 .pane:focus-within {
@@ -596,7 +623,7 @@ a:hover { text-decoration-thickness: 2px; }
   font-size: var(--fs-md);
 }
 
-/* ---- `tree posts/` — the homepage index ----
+/* ---- `tre posts/` — the homepage index ----
  * The guides are real box-drawing characters carried in the markup, so
  * `white-space: pre` is load-bearing: HTML collapses the runs of spaces that
  * make the indent, and without it every branch would sit at column zero.
@@ -604,64 +631,83 @@ a:hover { text-decoration-thickness: 2px; }
  * colorls paints directories orange (`dir: $orange$` = --id-accent2) and its
  * tree guides `$fg_faint$`. The guides are --id-dim here instead: faint is
  * 2.21:1 in light and these lines ARE the structure, so at that weight the
- * hierarchy stops being readable. They are aria-hidden either way — the nested
- * lists carry the shape for anyone not looking at it.
+ * hierarchy stops being readable. They are aria-hidden either way — every row
+ * is a link carrying a full aria-label.
+ *
+ * There is no summary rule here because tre prints no summary. GNU tree's
+ * "N directories, M files" used to be the last line and is gone.
  */
-.tree { font-size: var(--fs-sm); }
-.tree__root, .tree__lvl, .tree__lvl li { margin: 0; }
-/* A second root is a second argument to the same command, and tree separates
- * them with a blank line. So does the summary. One line, computed rather than
- * approximated, so it tracks the type scale. */
-.tree__lvl + .tree__root { margin-block-start: calc(var(--fs-sm) * var(--lh)); }
-.tree__root {
+.tre { font-size: var(--fs-sm); }
+.tre__root, .tre__lvl, .tre__lvl li { margin: 0; }
+/* A second root is a second argument to the same command, and tre puts a blank
+ * line between them. One line, computed rather than approximated, so it tracks
+ * the type scale. */
+.tre__lvl + .tre__root { margin-block-start: calc(var(--fs-sm) * var(--lh)); }
+.tre__root {
   color: var(--id-accent2, #a65009);
   font-weight: 700;
 }
 
-.tree__lvl { list-style: none; margin: 0; padding: 0; }
-.tree__g {
+.tre__lvl { list-style: none; margin: 0; padding: 0; }
+.tre__g {
   white-space: pre;
   color: var(--id-dim, #928374);
 }
-.tree__dir { color: var(--id-accent2, #a65009); font-weight: 700; }
+.tre__row > .tre__g { margin-inline-end: -2ch; }
+.tre__dir { color: var(--id-accent2, #a65009); font-weight: 700; }
+/* A category directory descends into /categories/:name/. Underlined only on
+ * interaction: a tree of permanently underlined directories reads as a link
+ * farm rather than as output. */
+a.tre__dir { text-decoration: none; }
+a.tre__dir:hover,
+a.tre__dir:focus-visible { text-decoration: underline; }
 
-.tree__row {
+.tre__row {
   display: inline-flex;
   align-items: baseline;
-  gap: 0 1ch;
+  /* Two spaces between the leaf's own columns — date, title, tags — which are
+   * this site's invention and can be spaced to read. The gap AFTER the guide
+   * is not: "└── " already ends in its own space, and a real tre puts the name
+   * at column 12, not 14. The negative margin cancels the gap on that one
+   * boundary so a leaf name lines up with a directory name above it. */
+  gap: 0 2ch;
   padding-inline-end: var(--s2);
   border-radius: 2px;
   text-decoration: none;
   color: inherit;
   min-width: 0;
 }
-a.tree__row:hover,
-a.tree__row:focus-visible {
+a.tre__row:hover,
+a.tre__row:focus-visible {
   background: var(--id-select-bg, #eee0b7);
   color: var(--id-select-fg, #9c4b08);
   font-weight: 700;
 }
-a.tree__row:hover :is(.tree__date, .tree__cat, .tree__name, .tree__g),
-a.tree__row:focus-visible :is(.tree__date, .tree__cat, .tree__name, .tree__g) {
+a.tre__row:hover :is(.tre__date, .tre__cat, .tre__tags, .tre__name, .tre__g),
+a.tre__row:focus-visible :is(.tre__date, .tre__cat, .tre__tags, .tre__name, .tre__g) {
   color: inherit;
 }
 
-.tree__date { color: var(--id-muted, #6b665f); }
+/* MM-DD under a year directory, so this is 5 characters and the column is
+ * fixed. The full date is in <time datetime> and in the row's label. */
+.tre__date { color: var(--id-muted, #6b665f); white-space: nowrap; }
 /* A floor, not a fixed width: categories are short words, so this lines the
- * titles up without truncating one that is not. */
-.tree__cat { color: var(--id-accent2, #a65009); min-width: 8ch; }
-.tree__name { min-width: 0; overflow-wrap: anywhere; }
-.tree__mode { color: var(--id-dim, #928374); }
+ * titles up without truncating one that is not. Drafts only — a published
+ * post's category is the directory it sits in. */
+.tre__cat { color: var(--id-accent2, #a65009); min-width: 8ch; }
+.tre__name { min-width: 0; overflow-wrap: anywhere; }
+/* Tags are the row's least important field and the first that should give way,
+ * so they are the only part allowed to drop: below the width where a full row
+ * fits, the guides + date + title still do. */
+.tre__tags { color: var(--id-dim, #928374); }
+.tre__mode { color: var(--id-dim, #928374); }
 
-.tree__row--draft { color: var(--id-muted, #6b665f); }
-.tree__row--draft .tree__cat { color: var(--id-muted, #6b665f); }
+.tre__row--draft { color: var(--id-muted, #6b665f); }
+.tre__row--draft .tre__cat { color: var(--id-muted, #6b665f); }
 
-/* tree's own trailing count, and it prints one. */
-.tree__sum {
-  margin-block-start: calc(var(--fs-sm) * var(--lh));
-  color: var(--id-muted, #6b665f);
+@media (max-width: 34rem) {
+  .tre__tags { display: none; }
 }
-.tree__note { color: var(--id-dim, #928374); }
 
 /* ---- post index as `ls -la` output ----
  * No `font-variant-numeric: tabular-nums` anywhere on this site: Maple Mono has
@@ -745,6 +791,7 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
   padding: var(--s1) var(--s2);
   color: var(--id-fg, #654735);
   cursor: pointer;
+  white-space: nowrap;
 }
 /* menu-selected-style again — this list is a menu, so it gets the same pair. */
 .picker__row:hover {
