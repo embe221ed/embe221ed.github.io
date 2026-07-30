@@ -1,6 +1,16 @@
 # Drafts advertised on the homepage index without being published.
-# Rendered greyed out with `-rw-------` mode bits. Delete a row when the real
-# post lands in _posts/. Purely cosmetic — nothing here affects the build.
+#
+# YOU PROBABLY DO NOT NEED THIS FILE. _plugins/drafts.rb reads the front matter
+# of everything in _drafts/, so putting a file there is enough — the listing
+# picks up its date, category and title on the next build, and publishing is
+# `git mv` into _posts/ with a dated filename.
+#
+# What this file is still for: advertising a draft whose PROSE you do not want
+# in a public repo. A row here names the thing without committing the text.
+# Rows from both sources are merged and sorted together, newest first.
+#
+# Rendered greyed out with `-rw-------` mode bits. Purely cosmetic — nothing
+# here affects the build.
 #
 # - date: "2026-08-14"
 #   category: writeup

@@ -817,15 +817,20 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
 }
 
 /* The `*` marks the author's own active theme, exactly like `interdot list`.
- * Driven purely off :root so it can never disagree with the stylesheet. */
+ * Driven purely off :root so it can never disagree with the stylesheet.
+ *
+ * Keyed on data-set-theme — the POLARITY the row switches to — and not on a
+ * theme name. The star means "this is what you are looking at", which is a
+ * statement about light or dark, and naming gruvbox-material here meant the
+ * stylesheet was a third file to edit when a theme was generated. */
 .picker__star { width: 1ch; color: var(--id-accent, #925c07); font-weight: 700; }
-.picker__row[data-theme-option="gruvbox-material-light"] .picker__star::before { content: "*"; }
+.picker__row[data-set-theme="light"] .picker__star::before { content: "*"; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) .picker__row[data-theme-option="gruvbox-material-light"] .picker__star::before { content: ""; }
-  :root:not([data-theme]) .picker__row[data-theme-option="gruvbox-material-dark"] .picker__star::before { content: "*"; }
+  :root:not([data-theme]) .picker__row[data-set-theme="light"] .picker__star::before { content: ""; }
+  :root:not([data-theme]) .picker__row[data-set-theme="dark"] .picker__star::before { content: "*"; }
 }
-:root[data-theme="dark"] .picker__row[data-theme-option="gruvbox-material-light"] .picker__star::before { content: ""; }
-:root[data-theme="dark"] .picker__row[data-theme-option="gruvbox-material-dark"] .picker__star::before { content: "*"; }
+:root[data-theme="dark"] .picker__row[data-set-theme="light"] .picker__star::before { content: ""; }
+:root[data-theme="dark"] .picker__row[data-set-theme="dark"] .picker__star::before { content: "*"; }
 
 .term-note {
   color: var(--id-muted, #6b665f);

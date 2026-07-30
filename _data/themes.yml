@@ -1,9 +1,22 @@
-# Themes that exist in interdotensional but are not yet generated for the web.
-# Shown greyed out in the `interdot list` picker on the homepage so the list
-# matches reality. Move one up into the live picker once its CSS is generated.
-- catppuccin-frappe
-- catppuccin-latte
-- tokyonight-storm
-- tokyonight-day
-- nord
-- onedarkpro-onedark
+# The `interdot list` picker on the homepage, in order.
+#
+#   name  the theme's name in interdotensional
+#   sets  the site theme this row switches to: `light` or `dark`. A row WITH
+#         `sets` is a live button. A row WITHOUT it is listed greyed out —
+#         the theme exists in interdotensional but its CSS has not been
+#         generated for the web yet.
+#
+# This file is the only place a theme is named. The layout loops over it and
+# the stylesheet marks the active row off `sets`, not off a theme name, so
+# generating a new theme's CSS costs one line here and nothing else.
+
+- name: gruvbox-material-light
+  sets: light
+- name: gruvbox-material-dark
+  sets: dark
+- name: catppuccin-frappe
+- name: catppuccin-latte
+- name: tokyonight-storm
+- name: tokyonight-day
+- name: nord
+- name: onedarkpro-onedark

@@ -23,7 +23,7 @@ layout: default
   <div class="panes panes--home">
 
     <section class="pane pane--hero">
-      <span class="pane__title">{{ site.author.name }}@blog:~</span>
+      {%- include pane-title.html path="~" -%}
       {%- comment -%}
         The working copy is dirty exactly when _data/drafts.yml has rows in it:
         those are posts written and not yet committed to _posts/. Computed, not
@@ -66,7 +66,7 @@ layout: default
         The cwd is home, not ~/writeups: the pane lists everything published,
         and `writeups` framed the whole site as one category of post.
       {%- endcomment -%}
-      <span class="pane__title">{{ site.author.name }}@blog:~</span>
+      {%- include pane-title.html path="~" -%}
       <h2 class="ps1 ps1--pane">
         {%- include ps1.html dir="~" dirty=dirty said="tre posts/" -%}
       </h2>
@@ -97,33 +97,33 @@ layout: default
     </section>
 
     <section class="pane pane--themes">
-      <span class="pane__title">{{ site.author.name }}@blog:~/.config/interdot</span>
+      {%- include pane-title.html path="~/.config/interdot" -%}
       <h2 class="ps1 ps1--pane">
         {%- include ps1.html dir="interdot" said="interdot list" -%}
       </h2>
       <p class="picker__cmd">themes (* = what I'm running)</p>
+      {%- comment -%}
+        One loop over _data/themes.yml. The two live rows used to be written
+        out here by name and the rest came from the data file, so adding a
+        generated theme meant editing this layout, the data file and the
+        stylesheet. A row with `sets` is live; a row without it is greyed out.
+      {%- endcomment -%}
       <ul class="picker">
-        <li>
-          <button type="button" class="picker__row" data-theme-option="gruvbox-material-light"
-                  data-set-theme="light">
-            <span class="picker__star" aria-hidden="true"></span>
-            <span>gruvbox-material-light</span>
-          </button>
-        </li>
-        <li>
-          <button type="button" class="picker__row" data-theme-option="gruvbox-material-dark"
-                  data-set-theme="dark">
-            <span class="picker__star" aria-hidden="true"></span>
-            <span>gruvbox-material-dark</span>
-          </button>
-        </li>
         {%- for t in site.data.themes %}
         <li>
-          <button type="button" class="picker__row" disabled
+          {%- if t.sets %}
+          <button type="button" class="picker__row" data-theme-option="{{ t.name }}"
+                  data-set-theme="{{ t.sets }}">
+            <span class="picker__star" aria-hidden="true"></span>
+            <span>{{ t.name }}</span>
+          </button>
+          {%- else %}
+          <button type="button" class="picker__row" data-theme-option="{{ t.name }}" disabled
                   title="Defined in interdotensional; not yet generated for the web.">
             <span class="picker__star" aria-hidden="true"></span>
-            <span>{{ t }}</span>
+            <span>{{ t.name }}</span>
           </button>
+          {%- endif %}
         </li>
         {%- endfor %}
       </ul>

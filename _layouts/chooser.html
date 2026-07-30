@@ -22,7 +22,8 @@ layout: default
 <div class="wrap surface-term">
   <div class="panes">
     <section class="pane">
-      <span class="pane__title">{{ site.author.name }}@blog:~/{{ label }}</span>
+      {%- capture pane_path %}~/{{ label }}{% endcapture -%}
+      {%- include pane-title.html path=pane_path -%}
 
       {%- comment -%}
         `choose-tree` takes no argument. The cwd already says which tree this
@@ -40,13 +41,20 @@ layout: default
         {%- assign name = t[0] %}
         {%- assign n = t[1].size %}
         {%- comment -%}
+          The href is the SLUG, the label is the term as written. jekyll-archives
+          generates its pages at Utils.slugify(title), so a term with a capital
+          or a space in it lives at a URL this list has to derive rather than
+          echo — `Heap Grooming` is at /tags/heap-grooming/.
+        {%- endcomment -%}
+        {%- assign slug = name | slugify %}
+        {%- comment -%}
           One mark per post, not a normalised bar: with a handful of posts a
           normalised bar puts every term at full width, which reads as noise.
           This starts subtle and grows as the archive does.
         {%- endcomment -%}
         {%- assign w = n %}{% if w > 24 %}{% assign w = 24 %}{% endif %}
         <li>
-          <a class="chooser__row" href="{{ base | append: name | append: '/' | relative_url }}">
+          <a class="chooser__row" href="{{ base | append: slug | append: '/' | relative_url }}">
             <span class="chooser__key">{{ name }}</span>
             <span class="chooser__bar" aria-hidden="true">{% for i in (1..w) %}▪{% endfor %}</span>
             <span class="chooser__count">{{ n }}</span>

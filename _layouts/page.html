@@ -4,7 +4,8 @@ layout: default
 <div class="wrap surface-term">
   <div class="panes">
     <section class="pane">
-      <span class="pane__title">{{ site.author.name }}@blog:~/{{ page.title | slugify }}</span>
+      {%- capture pane_path %}~/{{ page.title | slugify }}{% endcapture -%}
+      {%- include pane-title.html path=pane_path -%}
 
       {%- comment -%}
         %c is the last path component, which for this pane is the page slug —

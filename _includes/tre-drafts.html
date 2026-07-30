@@ -1,6 +1,9 @@
 {%- comment -%}
-  `tre drafts/` — the second invocation, rendered only when _data/drafts.yml
-  has rows.
+  `tre drafts/` — the second invocation, rendered only when there are drafts.
+
+  Rows come from _plugins/drafts.rb: the front matter of every file in
+  _drafts/, merged with any hand-written rows in _data/drafts.yml. Writing a
+  draft is putting a file in _drafts/; nothing else has to be told about it.
 
   A SEPARATE COMMAND, not a second root under the first. tre takes exactly one
   path — `pub path: String` with default "." in src/cli.rs — so `tre posts/
@@ -28,7 +31,12 @@
     <li>
       <span class="tre__row tre__row--draft">
         <span class="tre__g" aria-hidden="true">{{ dbranch }}</span>
-        <time class="tre__date" datetime="{{ d.date }}">{{ d.date }}</time>
+        {%- comment -%}
+          A draft need not have a date — it is unfinished, and one invented
+          from the file's mtime would read as today's on every CI checkout.
+          The column is simply absent rather than filled in with a guess.
+        {%- endcomment -%}
+        {%- if d.date %}<time class="tre__date" datetime="{{ d.date }}">{{ d.date }}</time>{% endif -%}
         {%- if d.category %}<span class="tre__cat">{{ d.category }}</span>{% endif -%}
         <span class="tre__name">{{ d.title }}</span>
         <span class="tre__mode" aria-hidden="true">-rw-------</span>

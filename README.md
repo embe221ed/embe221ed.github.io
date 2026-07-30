@@ -124,14 +124,22 @@ checksec:
 
 ### Drafts
 
-Anything in `_drafts/` is not built. Preview them with:
+Put the file in `_drafts/`. That is all — the homepage index picks it up on the
+next build and lists it under `tre drafts/`, greyed out with `-rw-------` mode
+bits. Publishing it is `git mv` into `_posts/` with a dated filename.
+
+Its date comes from front matter `date:`, or from a `YYYY-MM-DD-` filename
+prefix, or is left blank. Its body is never read.
+
+Preview drafts as real pages with:
 
 ```sh
 bundle exec jekyll serve --drafts --livereload
 ```
 
-To advertise a draft on the homepage index without publishing it, add a row to
-`_data/drafts.yml`. It renders greyed out with `-rw-------` mode bits.
+`_data/drafts.yml` still works and merges with the above. Use it for a draft
+whose *prose* you do not want in a public repo — a row there advertises the
+title without committing the text.
 
 ### Images
 
@@ -185,6 +193,39 @@ exists" and "it is live" is friction.
 Every `var(--id-*)` in `main.css` carries a literal fallback. CSS has no
 `StrictUndefined` — a renamed variable resolves to nothing, silently. Deleting
 the generated file must still leave a readable site; test that occasionally.
+
+`_data/themes.yml` is the only place a theme is named. A row with `sets: light`
+or `sets: dark` is a live button in the homepage picker; a row without one is
+listed greyed out as defined-but-not-generated. The `*` marker is keyed on
+`sets`, not on a theme name, so adding a generated theme is one line in that
+file and nothing else.
+
+## What is generated, and what you have to write
+
+The short version: write markdown, and nothing else needs telling.
+
+| you do this | this updates itself |
+|---|---|
+| add a post to `_posts/` | homepage `tre` index, `/archives/`, feed, sitemap, OG card, reading time |
+| use a new category | `/categories/` chooser, `/categories/<name>/`, the index's directory tree |
+| use a new tag | `/tags/` chooser, `/tags/<name>/` |
+| add a file to `_drafts/` | the `tre drafts/` listing, and the `✗` on every prompt |
+| move the site to a new domain | every pane title — `host_short` is derived from `url` in `_config.yml` |
+| reorder `_data/windows.yml` | the tmux window numbers in the status bar |
+
+Terms are linked by their **slug**, everywhere, because that is where
+jekyll-archives generates the page: a tag written `Heap Grooming` lives at
+`/tags/heap-grooming/`.
+
+## The build fails on dead links
+
+`_plugins/link_check.rb` runs after every build and refuses to finish if it
+finds a root-relative link with no file behind it, a `#fragment` with no
+matching id, or the same id twice on one page. All three are invisible without
+clicking, and all three have shipped here before.
+
+Set `CHECK_LINKS=0` to downgrade it to a warning. That is for when the check
+itself is wrong, not for shipping a dead link.
 
 ## Things that will bite you
 

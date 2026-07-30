@@ -111,7 +111,8 @@
       half is character-for-character the breadcrumb post.html draws and the
       title checksec.html draws, so all three name the same directory.
     {%- endcomment -%}
-    <span class="pane__title">{{ site.author.name }}@blog:~/posts/{{ post.date | date: "%Y" }}/{{ post.title | slugify }}</span>
+    {%- capture pane_path %}~/posts/{{ post.date | date: "%Y" }}/{{ post.title | slugify }}{% endcapture -%}
+    {%- include pane-title.html path=pane_path -%}
 
     <div class="card__body">
       {%- comment -%}

@@ -28,7 +28,16 @@ layout: default
     <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%Y-%m-%d" }}</time>
     {%- if page.categories.first %}
     <span>·</span>
-    <a href="{{ '/categories/' | append: page.categories.first | append: '/' | relative_url }}">{{ page.categories.first }}</a>
+    {%- comment -%}
+      Slugified, because jekyll-archives builds the page at the SLUG:
+      Utils.slugify(title) in archive.rb. A term that is already lowercase and
+      single-word is its own slug, which is why this was invisible — the first
+      tag with a capital or a space in it (`Heap Grooming` -> /tags/Heap%20Grooming/)
+      linked somewhere that was never generated. The visible text stays the term
+      as written; only the href is slugified.
+    {%- endcomment -%}
+    {%- assign cat_slug = page.categories.first | slugify -%}
+    <a href="{{ '/categories/' | append: cat_slug | append: '/' | relative_url }}">{{ page.categories.first }}</a>
     {%- endif %}
     {%- if page.tags.size > 0 %}
     <span>·</span>
@@ -40,7 +49,8 @@ layout: default
     {%- endcomment -%}
     <span>
       {%- for tag in page.tags %}
-      <a href="{{ '/tags/' | append: tag | append: '/' | relative_url }}">{{ tag }}</a>
+      {%- assign tag_slug = tag | slugify %}
+      <a href="{{ '/tags/' | append: tag_slug | append: '/' | relative_url }}">{{ tag }}</a>
       {%- endfor %}
     </span>
     {%- endif %}

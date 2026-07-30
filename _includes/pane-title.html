@@ -1,0 +1,22 @@
+{%- comment -%}
+  A tmux pane border title, in the author's real pane-border-format:
+
+      #{user}@#{host_short}:#{pane_current_path}
+
+  host_short is tmux's own field: the hostname up to the first dot. So it is
+  DERIVED from site.url — blog.embe221ed.dev gives `blog` — rather than written
+  down. Eight layouts spelled `@blog` as a literal, which meant the domain and
+  every pane title on the site could disagree with each other and nothing would
+  notice; moving the site to a different host meant editing eight files to stop
+  it lying.
+
+  site.url is empty in some local configurations, which would render `@:`, so
+  it falls back to `localhost` — the honest answer for a site being served from
+  one.
+
+    path  what follows the colon. Required; a pane is always somewhere. Pass
+          it pre-filtered — Jekyll's include tag takes no filters in a
+          parameter value, so callers `assign` or `capture` first.
+{%- endcomment -%}
+{%- assign host = site.url | split: "//" | last | split: "." | first | default: "localhost" -%}
+<span class="pane__title">{{ site.author.name }}@{{ host }}:{{ include.path }}</span>

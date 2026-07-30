@@ -14,7 +14,7 @@ layout: default
 <div class="wrap surface-term">
   <div class="panes">
     <section class="pane">
-      <span class="pane__title">{{ site.author.name }}@blog:~/posts</span>
+      {%- include pane-title.html path="~/posts" -%}
 
       <h1 class="ps1">
         {%- include ps1.html dir="posts" said="ls -R ~/posts" -%}

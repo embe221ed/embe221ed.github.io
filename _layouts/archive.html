@@ -25,14 +25,28 @@ layout: default
 <div class="wrap surface-term">
   <div class="panes">
     <section class="pane">
-      <span class="pane__title">{{ site.author.name }}@blog:~/{{ index_name }}/{{ page.title }}</span>
+      {%- comment -%}
+        The SLUG, not the term. These two are the same word for `pwn` and differ
+        for anything with a capital or a space in it — jekyll-archives puts
+        `Heap Grooming` at /tags/heap-grooming/, so a pane title reading
+        `~/tags/Heap Grooming` names a directory that was never generated. The
+        prompt below and the heading still say the term as the author wrote it;
+        only the path is the path.
+      {%- endcomment -%}
+      {%- assign term_slug = page.title | slugify -%}
+      {%- capture pane_path %}~/{{ index_name }}/{{ term_slug }}{% endcapture -%}
+      {%- include pane-title.html path=pane_path -%}
 
       {%- comment -%}
         %c is the term directory this pane is in — ~/tags/pwn gives `pwn`.
       {%- endcomment -%}
-      {%- capture said %}rg --{{ page.type }} {{ page.title }}{% endcapture -%}
+      {%- comment -%}
+        Quoted when it needs quoting. `rg --tag Heap Grooming` is two arguments
+        in any shell; the site prints commands it claims someone could run.
+      {%- endcomment -%}
+      {%- capture said %}rg --{{ page.type }} {% if page.title contains " " %}'{{ page.title }}'{% else %}{{ page.title }}{% endif %}{% endcapture -%}
       <h1 class="ps1">
-        {%- include ps1.html dir=page.title said=said -%}
+        {%- include ps1.html dir=term_slug said=said -%}
       </h1>
 
       <ul class="ls">
