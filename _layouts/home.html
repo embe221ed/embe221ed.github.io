@@ -47,11 +47,22 @@ layout: default
       </p>
       {%- comment -%}
         `whatis` output names a manual page, and now there is one — so the
-        name and section are the link to it, which is the only reason a whatis
-        line exists at all.
+        reference is the link to it, which is the only reason a whatis line
+        exists at all. A man page's cross-references are written `name(section)`
+        and are clickable in every viewer, so this is the convention rather than
+        an invention; it just has to LOOK clickable, which is what the accent
+        and the underline are for.
+
+        The name and section are ONE grid item, not two. They were two, and
+        wrapping them in the anchor collapsed them into a single cell — which
+        pushed the description into the wrong column and left the anchor's
+        underline stretched across the empty one, reading as a stray row of
+        dots under the output rather than as a link. The space between them is
+        a real space inside the anchor, so the underline runs unbroken.
       {%- endcomment -%}
       <h1 class="whatis">
-        <a class="whatis__ref" href="{{ '/man/' | relative_url }}"><span class="whatis__name">blog</span><span class="whatis__sec">(7)</span></a>
+        <a class="whatis__ref" href="{{ '/man/' | relative_url }}"
+           aria-label="Manual page: man 7 blog"><span class="whatis__name">blog</span> <span class="whatis__sec">(7)</span></a>
         <span class="whatis__dash" aria-hidden="true">-</span>
         {{ site.description | strip_newlines | strip }}
       </h1>

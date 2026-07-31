@@ -34,6 +34,13 @@
   url: /uses/
   paths: ["/uses/"]
 
+# The site's own manual. Its own window rather than a path folded into
+# `about`: it is not about the author, and a window that highlights for a page
+# it does not open is the status bar lying about where you are.
+- name: man
+  url: /man/
+  paths: ["/man/"]
+
 - name: about
   url: /about/
-  paths: ["/about/", "/man/"]
+  paths: ["/about/"]

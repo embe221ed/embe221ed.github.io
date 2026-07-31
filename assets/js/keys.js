@@ -307,6 +307,14 @@
     }
   });
 
+  /* On a narrow screen the window list is one scrolling line, so the current
+   * window can start off-screen — `6:about` while the list shows 1 through 4.
+   * Nudged into view without scrolling the page itself. */
+  var current = document.querySelector('.tmux__win[aria-current="page"]');
+  if (current && current.scrollIntoView) {
+    current.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+
   /* The 404 needs the same index and the same ranking to suggest a near miss,
    * and a second copy of a scoring function is a second thing to get wrong.
    * This is the only export; everything else stays private to the file. */

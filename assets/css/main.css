@@ -365,33 +365,43 @@ a:hover { text-decoration-thickness: 2px; }
    * item that wants the whole line can never share one — and `order` then moves
    * it past the right-hand side so row one reads `embe221ed ❯ … theme`.
    *
-   * ACCEPTED COST: tab order follows the DOM, so the four window links are
-   * reached before the theme button that is drawn on the row above them.
-   * Correcting it means reordering _includes/tmux-bar.html; for five controls
-   * inside one 3.5rem band this is the smaller harm than the layouts that keep
-   * DOM order, all of which spend a third row to do it.
+   * ACCEPTED COST: tab order follows the DOM, so the window links are reached
+   * before the theme button that is drawn on the row above them. Correcting it
+   * means reordering _includes/tmux-bar.html; inside one band this is the
+   * smaller harm than the layouts that keep DOM order, all of which spend an
+   * extra row to do it.
    *
-   * min-width goes back to 0 here: max-content is a floor, and a floor wider
-   * than the line it sits on would push the viewport sideways again. Alone on
-   * its line the list has somewhere to wrap to instead. */
+   * NOWRAP, and it used to wrap. Wrapping made the bar's height a function of
+   * how many windows there are, and two numbers downstream did not know that:
+   * --bar-rows is what scroll-margin clears the sticky bar with, and it was
+   * calibrated against a list that measured ~19.1em. Adding a fifth and sixth
+   * window pushed the list onto two lines at ~390px while --bar-rows still said
+   * two, so the bar stood 84px tall and headings cleared 80px — every in-page
+   * anchor landed under the bar. Wrapping also left a dangling separator at the
+   * start of each wrapped line, since the rule that draws it cannot see a line
+   * break.
+   *
+   * Alone on its row the list can scroll instead, which is what tmux does with
+   * a window list too long for the status line, and which A11Y-03's concern —
+   * the list overlapping the theme toggle — no longer applies to, because
+   * flex-basis: 100% means they never share a row. The bar is now exactly two
+   * rows here whatever _data/windows.yml contains. */
   .tmux__windows {
     order: 1;
     flex-basis: 100%;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--id-dim, #928374) transparent;
   }
   .tmux__right { margin-inline-start: auto; }
 }
 
-/* The window list measures ~19.1em on its own, so under that it wraps too and
- * the bar is three rows. Declared at 20em rather than 19.1em: the extra 0.9em
- * is the same slack the 30em above carries, spent in the direction that cannot
- * hide a heading. Between 19.1em and 20em the bar really is two rows and an
- * anchor lands 1.75rem lower than it had to — which is invisible, and is the
- * trade this variable exists to make. */
-@media (max-width: 20em) {
-  :root { --bar-rows: 3; }
-}
+/* There is no third row any more, at any width. The window list scrolls on its
+ * own line rather than wrapping onto another, so the bar is one row wide and
+ * two rows narrow — and that no longer depends on how many windows exist, which
+ * is what the measurement that used to live here did. */
 
 /* ============================================================
    PANE — a tmux split.
@@ -746,7 +756,10 @@ a:hover { text-decoration-thickness: 2px; }
  * to be the description alone, not "blog 7 - <description>". */
 .whatis {
   display: grid;
-  grid-template-columns: auto auto auto 1fr;
+  /* Three columns: the man reference, the dash, the description. It was four,
+     one each for the name and the section, until those two became a single
+     link and had to share a cell. */
+  grid-template-columns: auto auto 1fr;
   gap: 0 1ch;
   margin: 0;
   font-size: var(--fs);
@@ -1595,14 +1608,22 @@ kbd {
 a.tre__row--more:hover .tre__name,
 a.tre__row--more:focus-visible .tre__name { color: inherit; }
 
-/* whatis output names a manual page; the name IS the reference to it. */
+/* whatis output names a manual page, and the reference is the link to it. It
+ * takes the site's link colour and a solid underline rather than inheriting the
+ * heading's: a dotted rule in the heading's own colours was indistinguishable
+ * from decoration, which is the whole failure mode a cross-reference has. */
 .whatis__ref {
-  color: inherit;
-  text-decoration: none;
-  border-block-end: 1px dotted var(--id-dim, #928374);
+  color: var(--id-accent2, #a65009);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
 }
-.whatis__ref:hover, .whatis__ref:focus-visible {
-  border-block-end-color: var(--id-accent2, #a65009);
+.whatis__ref .whatis__name,
+.whatis__ref .whatis__sec { color: inherit; }
+.whatis__ref:hover,
+.whatis__ref:focus-visible {
+  background: var(--id-select-bg, #eee0b7);
+  color: var(--id-select-fg, #9c4b08);
 }
 
 /* ---- man ----
