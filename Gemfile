@@ -10,6 +10,14 @@ group :jekyll_plugins do
   gem "jekyll-toc",      "~> 0.19"   # article table of contents
 end
 
+# Commands, not a site plugin: `jekyll draft "title"` writes the file with front
+# matter already filled in, and `jekyll publish` moves it to _posts/ with
+# today's date on the filename. The gap between deciding to write and having a
+# file open is the one this closes.
+group :jekyll_plugins do
+  gem "jekyll-compose", "~> 0.12"
+end
+
 # Ruby 4.0 dropped these from the default gems; Jekyll still wants them.
 gem "logger"
 gem "base64"

@@ -495,10 +495,11 @@ a:hover { text-decoration-thickness: 2px; }
   color: var(--id-pane-active, #a15335);
 }
 
-/* ---- the other two tiers ----
- * No markup emits these yet. They are written here so the tier stays a property
- * of the config rather than of whichever component is built first: when the
- * choose-tree / actions overlay lands it inherits `rounded + pink`, and it is
+/* ---- the menu tier ----
+ * Emitted by the keybinding menu and the finder (assets/js/keys.js). This was
+ * written ahead of any markup so the tier stayed a property of the config
+ * rather than of whichever component was built first; the overlay it was
+ * waiting for is now here, and it inherits `rounded + pink` as promised. It is
  * the ONLY thing on the site allowed to be round.
  *   menu-border-lines "rounded", menu-border-style fg=pink, menu-style
  *   bg=panel_inset — and since the menu ground IS panel_inset, which is the same
@@ -510,6 +511,162 @@ a:hover { text-decoration-thickness: 2px; }
   border-radius: 6px;
   padding-block: var(--s2);
 }
+
+/* The layer every overlay is mounted into. Fixed, dim, and click-through to
+ * dismiss on the backdrop only. Anchored toward the top rather than centred
+ * because a tmux popup opens where the pane is, and a finder that jumps to the
+ * middle of the screen reads as a modal dialog rather than as a prompt. */
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh var(--s4) var(--s4);
+  background: color-mix(in srgb, var(--id-bg-deep, #f4e8be) 72%, transparent);
+}
+.layer[hidden] { display: none; }
+/* Browsers without color-mix get a flat ground rather than a transparent one:
+ * an unreadable overlay is worse than an opaque one. */
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+  .layer { background: var(--id-bg-deep, #f4e8be); }
+}
+.is-layered { overflow: hidden; }
+
+.menu__row {
+  display: flex;
+  gap: 1.5ch;
+  padding: 0 var(--s4);
+  color: var(--id-fg, #654735);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+/* menu-selected-style: the ground is already panel_inset, which is the colour a
+ * fill would use, so the selected row is marked by hue and weight alone. */
+.menu__row.is-sel {
+  color: var(--id-select-fg, #9c4b08);
+  font-weight: 700;
+}
+.menu__key {
+  flex: none;
+  min-width: 8ch;
+  color: var(--id-accent2, #a65009);
+  font-weight: 700;
+  white-space: pre;
+}
+.menu__sep {
+  height: 1px;
+  margin: var(--s2) 0;
+  background: var(--id-pane-active, #a15335);
+  opacity: .35;
+}
+.menu--keys { max-width: min(40ch, 100%); }
+
+/* ---- the finder ----
+ * fzf's own shape: the query on top with the caret, the matched/total counter
+ * on the right of that line, results below. Square, not rounded — it is a
+ * prompt, and the rounded tier belongs to menus. */
+.fz {
+  width: min(64ch, 100%);
+  background: var(--id-bg, #fbf1c7);
+  border: 1px solid var(--id-pane-active, #a15335);
+  font-size: var(--fs-sm);
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+  min-height: 0;
+}
+.fz__in {
+  display: flex;
+  align-items: baseline;
+  gap: 1ch;
+  padding: var(--s2) var(--s3);
+  border-block-end: 1px solid var(--id-border, #d5c4a1);
+}
+.fz__caret { color: var(--id-success, #626d2a); font-weight: 700; }
+.fz__field {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  color: var(--id-fg-strong, #4f3829);
+  font: inherit;
+  font-family: inherit;
+  outline: none;
+}
+.fz__count {
+  color: var(--id-dim, #928374);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.fz__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--s1) 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+.fz__row {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5ch;
+  padding: 0 var(--s3);
+  color: var(--id-muted, #6b665f);
+  cursor: pointer;
+}
+.fz__row.is-sel {
+  background: var(--id-select-bg, #eee0b7);
+  color: var(--id-select-fg, #9c4b08);
+  font-weight: 700;
+}
+.fz__cat { flex: none; min-width: 9ch; color: var(--id-dim, #928374); }
+.fz__name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.fz__date {
+  flex: none;
+  color: var(--id-dim, #928374);
+  font-variant-numeric: tabular-nums;
+}
+.fz__row.is-sel :is(.fz__cat, .fz__date) { color: inherit; }
+/* The matched characters. <em> because they ARE emphasis in the result — the
+ * reason this row is here — and the site has no other italic in a listing. */
+.fz__name em {
+  font-style: normal;
+  color: var(--id-accent2, #a65009);
+  font-weight: 700;
+}
+.fz__row.is-sel .fz__name em { color: inherit; }
+.fz__none { padding: 0 var(--s3); color: var(--id-dim, #928374); }
+
+@media (max-width: 34rem) {
+  .fz__date { display: none; }
+  .layer { padding-block-start: 6vh; }
+}
+
+/* ---- status bar additions ---- */
+/* tmux inverts the status bar while the prefix is pending. Same here: it is the
+ * only inverted thing on the site, which is what makes it read as a mode. */
+.tmux__prefix {
+  background: var(--id-accent, #925c07);
+  color: var(--id-bg, #fbf1c7);
+  font-weight: 700;
+  padding-inline: .7ch;
+  opacity: 0;
+  transition: opacity .1s;
+}
+.tmux__prefix.is-on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .tmux__prefix { transition: none; } }
+
+.tmux__keys {
+  background: none;
+  border: 0;
+  padding: 0 .4ch;
+  font: inherit;
+  color: var(--id-dim, #928374);
+  cursor: pointer;
+}
+.tmux__keys:hover { color: var(--id-accent2, #a65009); }
+.tmux__keys[hidden] { display: none; }
 .menu__row--on {
   color: var(--id-select-fg, #9c4b08);
   font-weight: 700;
@@ -1405,3 +1562,171 @@ a.ls__row:focus-visible .ls__cat { color: inherit; }
  * the reading measure instead of the wide track. */
 .prose > figure.highlight { grid-column: text-start / wide-end; margin: 0; }
 .prose figure.highlight { font-size: var(--fs-sm); line-height: 1.6; }
+
+
+/* ═══ pages and post exits ══════════════════════════════════════════════════
+ * Components added with the keyboard layer, the 404, /man/, /uses/ and the
+ * navigation at the foot of a post. They all reuse the existing type scale and
+ * colour roles; nothing here introduces a new one.
+ */
+
+/* ---- 404 ----
+ * The error is red because a shell prints it red, and it carries the word
+ * "no such file or directory" so the colour is never the only channel. */
+.err {
+  margin: 0 0 var(--s4);
+  color: var(--id-danger, #b43e3e);
+  overflow-wrap: anywhere;
+}
+
+kbd {
+  border: 1px solid var(--id-border, #d5c4a1);
+  background: var(--id-panel, #e5d5ad);
+  color: var(--id-fg-strong, #4f3829);
+  padding: .05em .5em;
+  border-radius: 2px;
+  font: inherit;
+  font-size: .92em;
+}
+
+/* The overflow row: the only row in the tree that leaves it. Dim, because it
+ * is not a post — it is the absence of some. */
+.tre__row--more { color: var(--id-dim, #928374); }
+a.tre__row--more:hover .tre__name,
+a.tre__row--more:focus-visible .tre__name { color: inherit; }
+
+/* whatis output names a manual page; the name IS the reference to it. */
+.whatis__ref {
+  color: inherit;
+  text-decoration: none;
+  border-block-end: 1px dotted var(--id-dim, #928374);
+}
+.whatis__ref:hover, .whatis__ref:focus-visible {
+  border-block-end-color: var(--id-accent2, #a65009);
+}
+
+/* ---- man ----
+ * roff's three-column furniture. A grid so the centre stays centred and the
+ * edges stay put at any width — space-padding would drift. */
+.man__rule {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1ch;
+  margin: 0;
+  color: var(--id-dim, #928374);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+.man__rule > :last-child { text-align: end; }
+@media (max-width: 40rem) {
+  /* The centre column is the manual's title, which is the one part a narrow
+     screen can lose without losing the shape. */
+  .man__rule > :nth-child(2) { display: none; }
+  .man__rule { grid-template-columns: 1fr 1fr; }
+}
+
+.man__body { margin-block: var(--s5); }
+/* Section headings are flush left and uppercase; the body is indented under
+   them, which is the whole visual grammar of a man page. */
+.man__body h2 {
+  margin: var(--s6) 0 var(--s2);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--id-fg-strong, #4f3829);
+}
+.man__body h2:first-child { margin-block-start: 0; }
+/* The prose tier prefixes headings with their markdown level — `## NAME` — which
+ * is right in an article and wrong here: a man page's sections are roff macros,
+ * not markdown, and the page is claiming to be roff output. The body reuses
+ * .prose for everything else, so the prefix is switched off rather than the
+ * tier abandoned. */
+.man__body :is(h2, h3, h4, h5, h6)::before { content: none; }
+.man__body > :not(h2) { margin-inline-start: 3ch; }
+@media (max-width: 34rem) { .man__body > :not(h2) { margin-inline-start: 1.5ch; } }
+/* Definition lists are how a man page states options and files. */
+.man__body dt {
+  margin-block-start: var(--s3);
+  color: var(--id-accent2, #a65009);
+  font-weight: 700;
+}
+.man__body dd { margin: 0 0 0 3ch; color: var(--id-muted, #6b665f); }
+
+/* ---- uses ---- */
+.uses__lede { margin-block-end: var(--s5); }
+.uses__group {
+  margin: var(--s6) 0 var(--s2);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--id-accent2, #a65009);
+}
+.uses { list-style: none; margin: 0; padding: 0; }
+.uses__row {
+  display: grid;
+  grid-template-columns: minmax(12ch, 16ch) 1fr;
+  gap: 0 2ch;
+  padding-block: var(--s1);
+  font-size: var(--fs-sm);
+}
+.uses__name { color: var(--id-fg-strong, #4f3829); font-weight: 700; }
+.uses__name a { color: inherit; text-decoration: none; border-block-end: 1px solid transparent; }
+.uses__name a:hover, .uses__name a:focus-visible {
+  color: var(--id-accent2, #a65009);
+  border-block-end-color: currentColor;
+}
+.uses__what { color: var(--id-fg, #654735); }
+/* The opinion, on its own line in the second column and marked as a comment,
+   because that is what it is. */
+.uses__note {
+  grid-column: 2;
+  color: var(--id-dim, #928374);
+}
+@media (max-width: 34rem) {
+  .uses__row { grid-template-columns: 1fr; gap: 0; }
+  .uses__note, .uses__what { grid-column: 1; }
+}
+
+/* ---- the exits at the foot of a post ---- */
+.post-exit {
+  max-width: var(--measure, 68ch);
+  margin: var(--s7) auto 0;
+  padding-block-start: var(--s5);
+  border-block-start: 1px solid var(--id-border, #d5c4a1);
+}
+.post-exit__h {
+  margin: var(--s6) 0 var(--s2);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  color: var(--id-muted, #6b665f);
+}
+.post-nav { list-style: none; margin: 0; padding: 0; }
+.post-nav__row {
+  display: flex;
+  align-items: baseline;
+  gap: 0 1ch;
+  flex-wrap: wrap;
+  padding: var(--s1) var(--s2);
+  margin-inline: calc(var(--s2) * -1);
+  border-radius: 2px;
+  text-decoration: none;
+  color: var(--id-fg, #654735);
+  font-size: var(--fs-sm);
+}
+.post-nav__row:hover, .post-nav__row:focus-visible {
+  background: var(--id-select-bg, #eee0b7);
+  color: var(--id-select-fg, #9c4b08);
+  font-weight: 700;
+}
+.post-nav__cmd { color: var(--id-success, #626d2a); font-weight: 700; white-space: pre; }
+.post-nav__row:hover .post-nav__cmd,
+.post-nav__row:focus-visible .post-nav__cmd { color: inherit; }
+.post-nav__name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.post-nav__date,
+.post-nav__shared {
+  color: var(--id-dim, #928374);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.post-nav__row:hover :is(.post-nav__date, .post-nav__shared),
+.post-nav__row:focus-visible :is(.post-nav__date, .post-nav__shared) { color: inherit; }

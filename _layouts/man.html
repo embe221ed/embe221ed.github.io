@@ -1,0 +1,52 @@
+---
+layout: default
+---
+{%- comment -%}
+  A man page, because the homepage runs `whatis blog` and prints `blog(7)`.
+  `whatis` exists to tell you a manual page is there; until now it wasn't, which
+  made the one command on the front page a promise the site did not keep.
+
+  Section 7 is right and not a joke: it is "miscellaneous information" — the
+  section for conventions, file formats and overviews, which is exactly what a
+  colophon is.
+
+  The header and footer lines are roff's own three-column furniture:
+  left and right are the page's name and section, the centre is the manual's
+  title, and the footer's centre is the source's date. They are laid out with a
+  grid rather than padded with spaces so they stay put when the pane is narrow.
+{%- endcomment -%}
+<div class="wrap surface-term">
+  <div class="panes">
+    <section class="pane">
+      {%- capture pane_path %}~/man{% endcapture -%}
+      {%- include pane-title.html path=pane_path -%}
+
+      <h1 class="ps1">
+        {%- include ps1.html dir="man" said="man 7 blog" -%}
+      </h1>
+
+      <div class="man">
+        <p class="man__rule" aria-hidden="true">
+          <span>{{ page.man_name | default: "BLOG" }}({{ page.man_section | default: 7 }})</span>
+          <span>Miscellaneous Information Manual</span>
+          <span>{{ page.man_name | default: "BLOG" }}({{ page.man_section | default: 7 }})</span>
+        </p>
+
+        <div class="man__body prose">
+          {{ content }}
+        </div>
+
+        {%- comment -%}
+          roff's footer carries the source and its date. site.time is the build
+          time, so this says when the manual was last generated — which for a
+          colophon is the honest field, and it maintains itself.
+        {%- endcomment -%}
+        <p class="man__rule" aria-hidden="true">
+          <span>{{ site.url | split: "//" | last }}</span>
+          <span>{{ site.time | date: "%Y-%m-%d" }}</span>
+          <span>{{ page.man_name | default: "BLOG" }}({{ page.man_section | default: 7 }})</span>
+        </p>
+      </div>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,50 @@
+---
+layout: default
+---
+{%- comment -%}
+  /uses/ — the toolchain. Rendered as `interdot list`'s sibling: a grouped
+  listing, one row per tool, the opinionated half dimmed on its own line.
+
+  The rows come from _data/uses.yml, so adding a tool is one row in a data file
+  and never an edit here. The prose above them is the page's own markdown.
+{%- endcomment -%}
+<div class="wrap surface-term">
+  <div class="panes">
+    <section class="pane">
+      {%- capture pane_path %}~/.config{% endcapture -%}
+      {%- include pane-title.html path=pane_path -%}
+
+      <h1 class="ps1">
+        {%- include ps1.html dir=".config" said="interdot uses" -%}
+      </h1>
+
+      {%- if content != blank %}
+      <div class="prose uses__lede">{{ content }}</div>
+      {%- endif %}
+
+      {%- for g in site.data.uses %}
+      <h2 class="uses__group">{{ g.group }}/</h2>
+      <ul class="uses">
+        {%- for it in g.items %}
+        <li class="uses__row">
+          <span class="uses__name">
+            {%- if it.url -%}
+              <a href="{{ it.url }}">{{ it.name }}</a>
+            {%- else -%}
+              {{ it.name }}
+            {%- endif -%}
+          </span>
+          <span class="uses__what">{{ it.what }}</span>
+          {%- if it.note %}<span class="uses__note"># {{ it.note }}</span>{% endif %}
+        </li>
+        {%- endfor %}
+      </ul>
+      {%- endfor %}
+
+      <p class="term-note">
+        The palette here is the same one themed into everything above —
+        see <a href="{{ '/man/' | relative_url }}">man 7 blog</a>.
+      </p>
+    </section>
+  </div>
+</div>

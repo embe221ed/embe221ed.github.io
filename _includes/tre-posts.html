@@ -47,11 +47,29 @@
 {%- endcomment -%}
 
 {%- comment -%}
+  THE INDEX IS THE RECENT ONES, NOT ALL OF THEM. /archives/ lists every post
+  already; two pages listing the same set with this one carrying strictly more
+  detail was the same redundancy `choose-tree X` was killed for. So the front
+  page is the newest `limit` and says how many it is not showing, and the
+  archive is the complete record. Each has a job.
+
+  site.posts is newest-first, so slicing from 0 takes the most recent without a
+  sort. Below the limit — which is where this site is today — nothing changes:
+  no row is hidden and no overflow line is drawn.
+
+    limit  how many posts to show. Default 10.
+{%- endcomment -%}
+{%- assign limit = include.limit | default: 10 -%}
+{%- assign total = site.posts | size -%}
+{%- assign shown = site.posts | slice: 0, limit -%}
+{%- assign hidden = total | minus: shown.size -%}
+
+{%- comment -%}
   categories.size rather than a truthiness test on .first: Jekyll always
   gives a post a categories array, so this is a count and never a nil.
 {%- endcomment -%}
-{%- assign filed = site.posts | where_exp: "p", "p.categories.size > 0" -%}
-{%- assign unfiled = site.posts | where_exp: "p", "p.categories.size == 0" -%}
+{%- assign filed = shown | where_exp: "p", "p.categories.size > 0" -%}
+{%- assign unfiled = shown | where_exp: "p", "p.categories.size == 0" -%}
 {%- assign dirs = filed | group_by_exp: "p", "p.categories.first" | sort: "name" -%}
 {%- assign ndirs = dirs | size -%}
 {%- assign nunfiled = unfiled | size -%}
@@ -67,7 +85,7 @@
       still hanging under it.
     {%- endcomment -%}
     {%- assign catlast = false -%}
-    {%- if forloop.last and nunfiled == 0 %}{% assign catlast = true %}{% endif -%}
+    {%- if forloop.last and nunfiled == 0 and hidden == 0 %}{% assign catlast = true %}{% endif -%}
     {%- if catlast -%}
       {%- assign cbranch = "└── " -%}{%- assign ccarry = "    " -%}
     {%- else -%}
@@ -121,7 +139,8 @@
       never appears on the front page.
     {%- endcomment -%}
     {%- for post in unfiled -%}
-    {%- if forloop.last %}{% assign ubranch = "└── " %}{% else %}{% assign ubranch = "├── " %}{% endif -%}
+    {%- assign ubranch = "├── " -%}
+    {%- if forloop.last and hidden == 0 %}{% assign ubranch = "└── " %}{% endif -%}
     <li>
       <a class="tre__row" href="{{ post.url | relative_url }}"
          aria-label="{{ post.title }} — {{ post.date | date: '%-d %B %Y' }}{% if post.tags.size > 0 %}, tagged {{ post.tags | join: ', ' }}{% endif %}">
@@ -132,6 +151,20 @@
       </a>
     </li>
     {%- endfor -%}
+
+    {%- comment -%}
+      What the tree is not showing. A row rather than a sentence underneath,
+      because it is a child of posts/ — that is where the missing entries are.
+      It is the one row that leaves the tree, so it goes to the complete list.
+    {%- endcomment -%}
+    {%- if hidden > 0 -%}
+    <li>
+      <a class="tre__row tre__row--more" href="{{ '/archives/' | relative_url }}">
+        <span class="tre__g" aria-hidden="true">└── </span>
+        <span class="tre__name">… and {{ hidden }} more</span>
+      </a>
+    </li>
+    {%- endif -%}
 
   </ul>
 

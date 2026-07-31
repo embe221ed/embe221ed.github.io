@@ -45,8 +45,13 @@ layout: default
       <p class="ps1 ps1--cmd" aria-hidden="true">
         {%- include ps1.html dir="~" dirty=dirty said="whatis blog" -%}
       </p>
+      {%- comment -%}
+        `whatis` output names a manual page, and now there is one — so the
+        name and section are the link to it, which is the only reason a whatis
+        line exists at all.
+      {%- endcomment -%}
       <h1 class="whatis">
-        <span class="whatis__name" aria-hidden="true">blog</span><span class="whatis__sec" aria-hidden="true">(7)</span>
+        <a class="whatis__ref" href="{{ '/man/' | relative_url }}"><span class="whatis__name">blog</span><span class="whatis__sec">(7)</span></a>
         <span class="whatis__dash" aria-hidden="true">-</span>
         {{ site.description | strip_newlines | strip }}
       </h1>
@@ -70,7 +75,7 @@ layout: default
       <h2 class="ps1 ps1--pane">
         {%- include ps1.html dir="~" dirty=dirty said="tre posts/" -%}
       </h2>
-      {%- include tre-posts.html -%}
+      {%- include tre-posts.html limit=10 -%}
       {%- comment -%}
         Drafts are a SECOND INVOCATION, not a second path on the first. tre
         takes exactly one path (src/cli.rs), so `tre posts/ drafts/` is a line

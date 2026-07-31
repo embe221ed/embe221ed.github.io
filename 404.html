@@ -1,0 +1,121 @@
+---
+layout: default
+title: not found
+permalink: /404.html
+sitemap: false
+---
+{%- comment -%}
+  GitHub Pages serves this for any path it cannot resolve, on a custom domain
+  too. Without it a mistyped URL is the one moment a visitor sees a page that is
+  not this site at all.
+
+  The error is zsh's real one. The path is filled in by script, because a static
+  page cannot know at build time which URL was missed — and the suggestions come
+  from the same index and the same ranking the finder uses, so a near miss like
+  /posts/madcorp/ lands on madcore.
+
+  WITHOUT SCRIPT it still works: the fallback below is rendered by Liquid and is
+  the most recent posts. A 404 that needs JavaScript to say anything is a 404
+  that says nothing.
+{%- endcomment -%}
+<div class="wrap surface-term">
+  <div class="panes">
+    <section class="pane">
+      {%- capture pane_path %}~{% endcapture -%}
+      {%- include pane-title.html path=pane_path -%}
+
+      <h1 class="ps1">
+        {%- capture said %}cd {{ page.url }}{% endcapture -%}
+        {%- include ps1.html dir="~" said=said -%}
+      </h1>
+
+      <p class="err" data-404-msg>cd: no such file or directory</p>
+
+      <p class="term-note" data-404-lead>Recently published:</p>
+      <div data-404-hits>
+        {%- include tre-posts.html limit=5 -%}
+      </div>
+
+      <p class="term-note">
+        <a href="{{ '/' | relative_url }}">cd ~</a>
+        · <a href="{{ '/archives/' | relative_url }}">ls -R ~/posts</a>
+        · press <kbd>/</kbd> to search
+      </p>
+    </section>
+  </div>
+</div>
+
+<script>
+/* Deliberately inline and tiny: this page exists to be fast on a bad link, and
+ * a request for a script to explain a failed request is a poor trade. */
+(function () {
+  "use strict";
+  var path = window.location.pathname + window.location.search;
+
+  var said = document.querySelector(".ps1__said");
+  if (said) said.textContent = "cd " + path;
+
+  var msg = document.querySelector("[data-404-msg]");
+  if (msg) msg.textContent = "cd: no such file or directory: " + path;
+
+
+  /* The last meaningful path segment is what the reader was aiming at:
+     /posts/madcorp/ -> madcorp. Slashes and dashes become spaces so the
+     subsequence matcher sees words rather than one long token. */
+  var guess = path.replace(/\/+$/, "").split("/").pop() || "";
+  guess = decodeURIComponent(guess).replace(/[-_.]+/g, " ").trim();
+  if (!guess) return;
+
+  /* keys.js is deferred, so it has not run yet while this script is being
+     parsed — window.blogSearch does not exist here. Deferred scripts all run
+     before DOMContentLoaded, so this is the first moment the index is
+     reachable. Getting this wrong is silent: the page still renders, just
+     always with the fallback listing. */
+  document.addEventListener("DOMContentLoaded", suggest);
+
+  function suggest() {
+  if (!window.blogSearch) return;
+  window.blogSearch.load().then(function (index) {
+    if (!index.length) return;
+    var hits = window.blogSearch.rank(guess, index).slice(0, 5);
+    if (!hits.length) return;
+
+    var lead = document.querySelector("[data-404-lead]");
+    var slot = document.querySelector("[data-404-hits]");
+    if (lead) lead.textContent = "did you mean:";
+    if (!slot) return;
+
+    var ul = document.createElement("ul");
+    ul.className = "tre__lvl";
+    hits.forEach(function (h, i) {
+      var li = document.createElement("li");
+      var a = document.createElement("a");
+      a.className = "tre__row";
+      a.href = h.e.u;
+      var g = document.createElement("span");
+      g.className = "tre__g";
+      g.setAttribute("aria-hidden", "true");
+      g.textContent = (i === hits.length - 1 ? "└── " : "├── ");
+      var d = document.createElement("time");
+      d.className = "tre__date";
+      d.dateTime = h.e.d;
+      d.textContent = h.e.d;
+      var n = document.createElement("span");
+      n.className = "tre__name";
+      n.textContent = h.e.t;
+      a.appendChild(g); a.appendChild(d); a.appendChild(n);
+      if (h.e.c) {
+        var c = document.createElement("span");
+        c.className = "tre__cat";
+        c.textContent = h.e.c;
+        a.insertBefore(c, n);
+      }
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    slot.innerHTML = "";
+    slot.appendChild(ul);
+  });
+  }
+})();
+</script>

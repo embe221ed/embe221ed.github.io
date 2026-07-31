@@ -1,0 +1,27 @@
+# Monthly, not weekly: this is a blog, and a PR per gem per week is noise that
+# gets ignored — which is how the previous rebuild started from a four-year-old
+# lockfile. Monthly is often enough to never be far behind and rare enough to
+# actually read.
+version: 2
+updates:
+  - package-ecosystem: bundler
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps"
+    # Rouge 5.x overhauls the HTML formatter's delegation, and this site ships
+    # three custom lexers plus a syntax.css targeting exact token classes.
+    # A major bump needs a visual diff of the madcore post, not an automerge,
+    # so it is proposed by hand rather than by robot.
+    ignore:
+      - dependency-name: rouge
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"

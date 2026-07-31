@@ -41,6 +41,18 @@
   </nav>
 
   <div class="tmux__right">
+    {%- comment -%}
+      The prefix indicator, which is what tmux shows while it waits for the
+      second half of a binding. Hidden until C-b arms it. It is drawn here and
+      not by script so it cannot flash in at first paint.
+    {%- endcomment -%}
+    <span class="tmux__prefix" data-prefix aria-hidden="true">^B</span>
+    {%- comment -%}
+      Revealed by assets/js/keys.js, never by this template: a page where that
+      file failed to load must not advertise a keyboard it does not have.
+    {%- endcomment -%}
+    <button type="button" class="tmux__keys" data-keyhint hidden
+            aria-label="Keyboard shortcuts">?</button>
     <button type="button" class="themebtn" data-theme-toggle
             aria-label="Theme mode: follow device, light, or dark">
       <span data-theme-label>theme</span>

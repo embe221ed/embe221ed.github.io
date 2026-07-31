@@ -90,4 +90,63 @@ layout: default
     {{ content | inject_anchors }}
   </div>
 
+  {%- comment -%}
+    The exits. Surface 2 is deliberately austere, so this is the whole of what
+    goes after the article: where to go next, and nothing else. Before it, a
+    reader who finished a post had exactly one route out — the breadcrumb.
+
+    `cd ../<slug>` because that is where these posts are: siblings in
+    ~/posts/<year>/. page.next is the newer post and page.previous the older,
+    which is Jekyll's ordering and not the reading order — so they are labelled
+    by date rather than by "next" and "previous", which nobody can keep straight.
+  {%- endcomment -%}
+  <nav class="post-exit" aria-label="More posts">
+    {%- if page.previous or page.next %}
+    <ul class="post-nav">
+      {%- if page.next %}
+      <li>
+        <a class="post-nav__row" href="{{ page.next.url | relative_url }}">
+          <span class="post-nav__cmd" aria-hidden="true">❯ cd ../</span>
+          <span class="post-nav__name">{{ page.next.title }}</span>
+          <span class="post-nav__date">{{ page.next.date | date: "%Y-%m-%d" }}</span>
+        </a>
+      </li>
+      {%- endif %}
+      {%- if page.previous %}
+      <li>
+        <a class="post-nav__row" href="{{ page.previous.url | relative_url }}">
+          <span class="post-nav__cmd" aria-hidden="true">❯ cd ../</span>
+          <span class="post-nav__name">{{ page.previous.title }}</span>
+          <span class="post-nav__date">{{ page.previous.date | date: "%Y-%m-%d" }}</span>
+        </a>
+      </li>
+      {%- endif %}
+    </ul>
+    {%- endif %}
+
+    {%- comment -%}
+      Ranked by shared tags in _plugins/related.rb. Absent, not padded, when
+      nothing is genuinely related — the count of shared tags is printed so the
+      claim is checkable rather than asserted.
+    {%- endcomment -%}
+    {%- if page.related and page.related.size > 0 %}
+    <h2 class="post-exit__h">
+      <span class="post-nav__cmd" aria-hidden="true">❯ </span>rg -l {{ page.tags | join: " " }}
+    </h2>
+    <ul class="post-nav post-nav--rel">
+      {%- for r in page.related %}
+      {%- assign shared = 0 -%}
+      {%- for tag in page.tags %}{% if r.tags contains tag %}{% assign shared = shared | plus: 1 %}{% endif %}{% endfor -%}
+      <li>
+        <a class="post-nav__row" href="{{ r.url | relative_url }}">
+          <span class="post-nav__name">{{ r.title }}</span>
+          <span class="post-nav__shared">{{ shared }} shared</span>
+          <span class="post-nav__date">{{ r.date | date: "%Y-%m-%d" }}</span>
+        </a>
+      </li>
+      {%- endfor %}
+    </ul>
+    {%- endif %}
+  </nav>
+
 </article>

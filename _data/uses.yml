@@ -1,0 +1,64 @@
+# What /uses/ lists. Grouped, in the order the groups appear.
+#
+# This is a data file and not prose in the page so that the list stays a list:
+# adding a tool is one row, and the page cannot drift into paragraphs about
+# tools that were removed two years ago.
+#
+#   name  the thing
+#   what  one line, what it is for. Not a review.
+#   url   optional; linked from the name
+#   note  optional; the opinionated part, dimmed
+
+- group: editor
+  items:
+    - name: nvim
+      what: everything that is text
+      url: https://neovim.io
+      note: lazy.nvim, telescope, treesitter; no mouse support enabled
+    - name: telescope.nvim
+      what: fuzzy finding, in and across files
+      url: https://github.com/nvim-telescope/telescope.nvim
+      note: the finder on this site is shaped after it
+
+- group: shell
+  items:
+    - name: zsh
+      what: the shell
+      url: https://www.zsh.org
+      note: two-line prompt, %c and git_prompt_info — the one drawn on this site
+    - name: tmux
+      what: sessions, windows, panes
+      url: https://github.com/tmux/tmux
+      note: status on top, base-index 1, renumber-windows on
+    - name: colorls
+      what: ls with icons and colour
+      url: https://github.com/athityakumar/colorls
+
+- group: reversing and pwn
+  items:
+    - name: pwntools
+      what: exploit development
+      url: https://github.com/Gallopsled/pwntools
+    - name: pwndbg
+      what: gdb, made usable
+      url: https://github.com/pwndbg/pwndbg
+    - name: Ghidra
+      what: decompilation
+      url: https://ghidra-sre.org
+    - name: nsjail
+      what: running challenge binaries without trusting them
+      url: https://github.com/google/nsjail
+
+- group: this site
+  items:
+    - name: interdotensional
+      what: generates every colour on this page
+      url: https://github.com/embe221ed/interdotensional
+      note: one palette, eight themes, sixteen roles — nvim, tmux, zsh and the web
+    - name: Jekyll
+      what: markdown in, static site out
+      url: https://jekyllrb.com
+    - name: Maple Mono
+      what: the typeface, self-hosted
+      url: https://github.com/subframe7536/maple-font
+      note: SIL OFL 1.1; subset to what the site actually prints

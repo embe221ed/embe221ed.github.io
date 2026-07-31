@@ -1,0 +1,32 @@
+---
+layout: null
+permalink: /search.json
+---
+{%- comment -%}
+  The index behind the finder (assets/js/keys.js) and the 404's suggestions.
+
+  Fetched once, on the first keystroke that needs it, and then cached by the
+  browser — so it costs nothing on a visit that never opens the finder. That is
+  why it is a file and not inlined into every page.
+
+  Keys are one letter because this ships to every reader who opens the finder
+  and the whole point is that it stays small. Roughly 200 bytes per post.
+
+    t  title          u  url            c  category
+    g  tags           d  date           x  excerpt, for context under the row
+
+  Every value goes through `jsonify`, which quotes and escapes it. A title with
+  a quote or a backslash in it is the reason — building JSON by hand with
+  string concatenation works right up until someone writes about `"` parsing.
+{%- endcomment -%}
+[
+{%- for post in site.posts -%}
+{%- unless forloop.first %},{% endunless -%}
+{"t":{{ post.title | jsonify }},
+"u":{{ post.url | relative_url | jsonify }},
+"c":{{ post.categories.first | default: "" | jsonify }},
+"g":{{ post.tags | jsonify }},
+"d":{{ post.date | date: "%Y-%m-%d" | jsonify }},
+"x":{{ post.excerpt | strip_html | normalize_whitespace | strip | truncate: 160 | jsonify }}}
+{%- endfor -%}
+]

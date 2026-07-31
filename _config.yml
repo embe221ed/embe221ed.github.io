@@ -39,6 +39,22 @@ interdot:
   theme: gruvbox-material
   font: Maple Mono
 
+# `jekyll draft "title"` and `jekyll publish _drafts/title.md`. These defaults
+# are what a new file is born with, so a draft starts valid instead of starting
+# empty — categories drives the tre index's directory, toc drives the contents
+# pane, and both are easier to delete than to remember.
+jekyll_compose:
+  auto_open: false
+  default_front_matter:
+    drafts:
+      categories: writeup
+      tags: []
+      toc: true
+    posts:
+      categories: writeup
+      tags: []
+      toc: true
+
 plugins:
   - jekyll-feed
   - jekyll-seo-tag

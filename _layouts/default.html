@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ site.lang | default: 'en' }}">
+<html lang="{{ site.lang | default: 'en' }}" data-baseurl="{{ site.baseurl }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -72,10 +72,17 @@
       {%- endcomment -%}
       <a href="{{ '/archives/' | relative_url }}">archives</a>
       <a href="{{ '/feed.xml' | relative_url }}">feed</a>
+      <a href="{{ '/man/' | relative_url }}">man</a>
       <span>theme: gruvbox-material · Maple Mono</span>
     </footer>
   </div>
 
   <script src="{{ '/assets/js/theme.js' | relative_url }}" defer></script>
+  {%- comment -%}
+    Keyboard navigation. Deferred and entirely additive — every binding it adds
+    has a link on the page that does the same thing, so a reader who blocks
+    scripts loses a shortcut and never a route.
+  {%- endcomment -%}
+  <script src="{{ '/assets/js/keys.js' | relative_url }}" defer></script>
 </body>
 </html>

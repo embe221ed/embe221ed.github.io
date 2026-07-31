@@ -29,6 +29,11 @@
   url: /tags/
   paths: ["/tags/"]
 
+# The tools, and the honest home for anything about how the site is built.
+- name: uses
+  url: /uses/
+  paths: ["/uses/"]
+
 - name: about
   url: /about/
-  paths: ["/about/"]
+  paths: ["/about/", "/man/"]
